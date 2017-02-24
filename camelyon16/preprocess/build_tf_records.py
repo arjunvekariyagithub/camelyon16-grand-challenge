@@ -75,15 +75,15 @@ import threading
 import numpy as np
 import tensorflow as tf
 
-CAMELYON_PROCESSED_PATCHES_TRAIN = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/Processed/' \
+PROCESSED_PATCHES_TRAIN = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/Processed/' \
                                    'patch-based-classification/raw-data/train/'
-CAMELYON_PROCESSED_PATCHES_TRAIN_NEGATIVE = CAMELYON_PROCESSED_PATCHES_TRAIN + 'label-0/'
-CAMELYON_PROCESSED_PATCHES_TRAIN_POSITIVE = CAMELYON_PROCESSED_PATCHES_TRAIN + 'label-1/'
+PROCESSED_PATCHES_TRAIN_NEGATIVE = PROCESSED_PATCHES_TRAIN + 'label-0/'
+PROCESSED_PATCHES_TRAIN_POSITIVE = PROCESSED_PATCHES_TRAIN + 'label-1/'
 
-CAMELYON_PROCESSED_PATCHES_VALIDATION = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
+PROCESSED_PATCHES_VALIDATION = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
                                         'Processed/patch-based-classification/raw-data/validation/'
-CAMELYON_PROCESSED_PATCHES_VALIDATION_NEGATIVE = CAMELYON_PROCESSED_PATCHES_VALIDATION + 'label-0/'
-CAMELYON_PROCESSED_PATCHES_VALIDATION_POSITIVE = CAMELYON_PROCESSED_PATCHES_VALIDATION + 'label-1/'
+PROCESSED_PATCHES_VALIDATION_NEGATIVE = PROCESSED_PATCHES_VALIDATION + 'label-0/'
+PROCESSED_PATCHES_VALIDATION_POSITIVE = PROCESSED_PATCHES_VALIDATION + 'label-1/'
 
 OUTPUT_DIR = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/Processed/' \
              'patch-based-classification/tf-records/'
@@ -94,9 +94,9 @@ N_SAMPLES_PER_TRAIN_SHARD = 1000
 N_SAMPLES_PER_VALIDATION_SHARD = 250
 
 
-tf.app.flags.DEFINE_string('train_directory', CAMELYON_PROCESSED_PATCHES_TRAIN,
+tf.app.flags.DEFINE_string('train_directory', PROCESSED_PATCHES_TRAIN,
                            'Training data directory')
-tf.app.flags.DEFINE_string('validation_directory', CAMELYON_PROCESSED_PATCHES_VALIDATION,
+tf.app.flags.DEFINE_string('validation_directory', PROCESSED_PATCHES_VALIDATION,
                            'Validation data directory')
 tf.app.flags.DEFINE_string('output_directory', OUTPUT_DIR,
                            'Output data directory')

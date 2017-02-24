@@ -34,7 +34,7 @@ from slim import slim
 
 TRAIN_DIR = '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/[2]SGD-b64'
 
-DATA_SET_NAME = 'TF-Records'
+DATA_SET_NAME = 'Camelyon'
 data_subset = ['train', 'validation']
 
 FLAGS = tf.app.flags.FLAGS
@@ -163,10 +163,11 @@ def _average_gradients(tower_grads):
        across all towers.
     """
     average_grads = []
-    for grad_and_vars in zip(*tower_grads):
+    for grad_and_vars in zip(*tower_grads):  # take common (i.e var0) variables from all towers
         # Note that each grad_and_vars looks like the following:
         #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
         grads = []
+        # prepare list of gradients for common variables (i.e var0) of each tower and do average
         for g, _ in grad_and_vars:
             # Add 0 dimension to the gradients to represent the tower.
             expanded_g = tf.expand_dims(g, 0)
@@ -222,10 +223,10 @@ def train(dataset):
 
         # Override the number of preprocessing threads to account for the increased
         # number of GPU towers.
-        num_preprocess_threads = FLAGS.num_preprocess_threads * FLAGS.num_gpus
+        num_pre_process_threads = FLAGS.num_preprocess_threads * FLAGS.num_gpus
         images, labels = image_processing.distorted_inputs(
             dataset,
-            num_preprocess_threads=num_preprocess_threads)
+            num_preprocess_threads=num_pre_process_threads)
 
         print(images.get_shape())
         print(labels.get_shape())

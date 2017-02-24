@@ -148,7 +148,7 @@ def decode_png(image_buffer, scope=None):
     Returns:
       3-D float Tensor with values ranging from [0, 1).
     """
-    with tf.op_scope([image_buffer], scope, 'decode_png'):
+    with tf.name_scope(scope, 'decode_png', [image_buffer]):
         # Decode the string as an RGB PNG.
         # Note that the resulting image contains an unknown height and width
         # that is set dynamically by decode_png. In other words, the height
@@ -156,8 +156,6 @@ def decode_png(image_buffer, scope=None):
         image = tf.image.decode_png(image_buffer, channels=3)
 
         # After this point, all image pixels reside in [0,1)
-        # until the very end, when they're rescaled to (-1, 1).  The various
-        # adjust_* ops all require this range for dtype float.
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         return image
 
@@ -171,7 +169,7 @@ def decode_jpeg(image_buffer, scope=None):
     Returns:
       3-D float Tensor with values ranging from [0, 1).
     """
-    with tf.op_scope([image_buffer], scope, 'decode_jpeg'):
+    with tf.name_scope(scope, 'decode_jpeg', [image_buffer]):
         # Decode the string as an RGB JPEG.
         # Note that the resulting image contains an unknown height and width
         # that is set dynamically by decode_jpeg. In other words, the height
@@ -200,7 +198,7 @@ def distort_color(image, thread_id=0, scope=None):
     Returns:
       color-distorted image
     """
-    with tf.op_scope([image], scope, 'distort_color'):
+    with tf.name_scope(scope, 'distort_color', [image]):
         color_ordering = thread_id % 2
 
         if color_ordering == 0:
@@ -235,7 +233,7 @@ def distort_image(image, height, width, thread_id=0, scope=None):
     Returns:
       3-D float Tensor of distorted image used for training.
     """
-    with tf.op_scope([image, height, width], scope, 'distort_image'):
+    with tf.name_scope(scope, 'distort_image', [image, height, width]):
         # Randomly flip the image horizontally.
         distorted_image = tf.image.random_flip_left_right(image)
 
@@ -259,7 +257,7 @@ def eval_image(image, height, width, scope=None):
     Returns:
       3-D float Tensor of prepared image.
     """
-    with tf.op_scope([image, height, width], scope, 'eval_image'):
+    with tf.name_scope(scope, 'eval_image', [image, height, width]):
         # Crop the central region of the image with an area containing 87.5% of
         # the original image.
         image = tf.image.central_crop(image, central_fraction=0.875)
@@ -272,7 +270,7 @@ def eval_image(image, height, width, scope=None):
         return image
 
 
-def image_preprocessing(image_buffer, train, thread_id=0):
+def image_preprocessing(image_buffer, train, thread_id):
     """Decode and preprocess one image for evaluation or training.
 
     Args:
@@ -288,9 +286,15 @@ def image_preprocessing(image_buffer, train, thread_id=0):
     """
 
     image = decode_png(image_buffer)
+
     # height = FLAGS.image_size
     # width = FLAGS.image_size
-    image = tf.reshape(image, shape=[256, 256, 3])
+    image = tf.reshape(image, shape=[FLAGS.image_size, FLAGS.image_size, 3])
+
+    # subtract channel wise mean
+    mean = tf.reduce_mean(image, axis=[0, 1])
+    mean = tf.reshape(mean, [1, 1, 3])
+    image = tf.subtract(image, mean)
 
     # Arjun - updated
     # if train:
@@ -298,19 +302,18 @@ def image_preprocessing(image_buffer, train, thread_id=0):
     # else:
     #     image = eval_image(image, height, width)
 
+    # Arjun - updated -> already in range [0, 1] so no need to do it again
     # First, scale scale to [0, 1) and finally scale to [-1,1]
-    # Arjun - updated
-    image = tf.divide(image, 255)
-    image = tf.subtract(image, 0.5)
-    image = tf.multiply(image, 2.0)
-    print(image.get_shape())
+    # image = tf.divide(image, 255)
+    # image = tf.subtract(image, 0.5)
+    # image = tf.multiply(image, 2.0)
     return image
 
 
 def parse_example_proto(example_serialized):
     """Parses an Example proto containing a training example of an image.
 
-    The output of the build_image_data.py image preprocessing script is a dataset
+    The output of the build_tf_records.py image preprocessing script is a dataset
     containing serialized Example protocol buffers. Each Example proto contains
     the following fields:
 
@@ -428,8 +431,8 @@ def batch_inputs(dataset, batch_size, train, num_preprocess_threads=None,
             enqueue_ops = []
             for _ in range(num_readers):
                 reader = dataset.reader()
-                _, value = reader.read(filename_queue)
-                enqueue_ops.append(examples_queue.enqueue([value]))
+                _, example = reader.read(filename_queue)
+                enqueue_ops.append(examples_queue.enqueue([example]))
 
             tf.train.queue_runner.add_queue_runner(
                 tf.train.queue_runner.QueueRunner(examples_queue, enqueue_ops))
@@ -457,7 +460,7 @@ def batch_inputs(dataset, batch_size, train, num_preprocess_threads=None,
         depth = 3
 
         images = tf.cast(images, tf.float32)
-        images = tf.reshape(images, shape=[batch_size, height, width, depth])
+        # images = tf.reshape(images, shape=[batch_size, height, width, depth])
 
         # Display the training images in the visualizer.
         tf.summary.image('images', images)

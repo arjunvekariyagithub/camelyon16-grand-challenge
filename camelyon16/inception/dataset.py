@@ -85,6 +85,26 @@ class Dataset(object):
             exit(-1)
         return data_files
 
+    def data_files_test(self):
+        """Returns a python list of all (sharded) data subset files.
+
+        Returns:
+          python list of all (sharded) data set files.
+        Raises:
+          ValueError: if there are not data_files matching the subset.
+        """
+        tf_record_pattern = os.path.join('/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/'
+                                         'Processed/patch-based-classification/tf-records/', '%s-*' % self.subset)
+        data_files = tf.gfile.Glob(tf_record_pattern)
+        if not data_files:
+            print('No files found for dataset %s/%s at %s' % (self.name,
+                                                              self.subset,
+                                                              FLAGS.data_dir))
+
+            self.download_message()
+            exit(-1)
+        return data_files[:1]
+
     def reader(self):
         """Return a reader for a single entry from the data set.
 

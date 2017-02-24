@@ -27,7 +27,6 @@ from __future__ import print_function
 import re
 
 import tensorflow as tf
-
 from slim import slim
 
 FLAGS = tf.app.flags.FLAGS
@@ -65,6 +64,7 @@ def inference(images, num_classes, for_training=False, restore_logits=True,
       Logits. 2-D float Tensor.
       Auxiliary Logits. 2-D float Tensor of side-head. Used for training only.
     """
+    # Arjun - check
     # Parameters for BatchNorm.
     batch_norm_params = {
         # Decay for the moving averages.
@@ -133,6 +133,23 @@ def loss(logits, labels, batch_size=None):
                                    label_smoothing=0.1,
                                    weight=0.4,
                                    scope='aux_loss')
+
+    # # Cross entropy loss for the main softmax prediction.
+    #
+    # tf.losses.sparse_softmax_cross_entropy(labels,
+    #                                        logits[0],
+    #                                        weights=1.0)
+    #
+    # # slim.losses.sparse_softmax_cross_entropy(logits[0],
+    # #                                       labels,
+    # #                                       label_smoothing=0.1,
+    # #                                       weight=1.0)
+    #
+    # # Cross entropy loss for the auxiliary softmax head.
+    # tf.losses.sparse_softmax_cross_entropy(labels,
+    #                                        logits[1],
+    #                                        weights=0.4,
+    #                                        scope='aux_loss')
 
 
 def _activation_summary(x):

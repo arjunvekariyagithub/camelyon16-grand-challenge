@@ -4,25 +4,7 @@ import glob
 import os
 import numpy as np
 import cv2
-
-# modify below directory entries as per your local file system
-TRAIN_TUMOR_WSI_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
-                                'TrainingData/Train_Tumor'
-TRAIN_NORMAL_WSI_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
-                                 'TrainingData/Train_Normal'
-TRAIN_TUMOR_MASK_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/TrainingData/' \
-                                 'Ground_Truth/Mask'
-PROCESSED_PATCHES_NORMAL_NEGATIVE_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
-                                         'Processed/patch-based-classification/normal-label-0/'
-PROCESSED_PATCHES_TUMOR_NEGATIVE_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
-                                         'Processed/patch-based-classification/tumor-label-0/'
-PROCESSED_PATCHES_POSITIVE_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
-                                        'Processed/patch-based-classification/label-1/'
-PROCESSED_PATCHES_FROM_USE_MASK_POSITIVE_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
-                                        'Processed/patch-based-classification/use-mask-label-1/'
-PATCH_SIZE = 256
-PATCH_NORMAL_PREFIX = 'normal_'
-PATCH_TUMOR_PREFIX = 'tumor_'
+import camelyon16.data as data
 
 
 class WSI(object):
@@ -65,16 +47,16 @@ class WSI(object):
             # Y = np.arange(b_y_start, b_y_end-256, 5)
 
             for x, y in zip(X, Y):
-                mask = self.mask_image.read_region((x, y), 0, (PATCH_SIZE, PATCH_SIZE))
+                mask = self.mask_image.read_region((x, y), 0, (data.PATCH_SIZE, data.PATCH_SIZE))
                 mask_gt = np.array(mask)
                 mask_gt = cv2.cvtColor(mask_gt, cv2.COLOR_BGR2GRAY)
 
                 white_pixel_cnt_gt = cv2.countNonZero(mask_gt)
 
-                if white_pixel_cnt_gt > ((PATCH_SIZE * PATCH_SIZE) * 0.90):
+                if white_pixel_cnt_gt > ((data.PATCH_SIZE * data.PATCH_SIZE) * 0.90):
                     # mask = Image.fromarray(mask)
-                    patch = self.wsi_image.read_region((x, y), 0, (PATCH_SIZE, PATCH_SIZE))
-                    patch.save(PROCESSED_PATCHES_FROM_USE_MASK_POSITIVE_PATH + PATCH_TUMOR_PREFIX +
+                    patch = self.wsi_image.read_region((x, y), 0, (data.PATCH_SIZE, data.PATCH_SIZE))
+                    patch.save(data.PROCESSED_PATCHES_USE_MASK_POSITIVE_PATH + data.PATCH_TUMOR_PREFIX +
                                str(self.positive_patch_index), 'PNG')
                     self.positive_patch_index += 1
                     patch.close()
@@ -106,7 +88,7 @@ class WSI(object):
             # Y = np.arange(b_y_start, b_y_end-256, 5)
 
             for x, y in zip(X, Y):
-                patch = self.wsi_image.read_region((x, y), 0, (PATCH_SIZE, PATCH_SIZE))
+                patch = self.wsi_image.read_region((x, y), 0, (data.PATCH_SIZE, data.PATCH_SIZE))
                 patch_array = np.array(patch)
 
                 patch_hsv = cv2.cvtColor(patch_array, cv2.COLOR_BGR2HSV)
@@ -117,9 +99,9 @@ class WSI(object):
                 mask = cv2.inRange(patch_hsv, lower_red, upper_red)
                 white_pixel_cnt = cv2.countNonZero(mask)
 
-                if white_pixel_cnt > ((PATCH_SIZE * PATCH_SIZE) * 0.50):
+                if white_pixel_cnt > ((data.PATCH_SIZE * data.PATCH_SIZE) * 0.50):
                     # mask = Image.fromarray(mask)
-                    patch.save(PROCESSED_PATCHES_NORMAL_NEGATIVE_PATH + PATCH_NORMAL_PREFIX +
+                    patch.save(data.PROCESSED_PATCHES_NORMAL_NEGATIVE_PATH + data.PATCH_NORMAL_PREFIX +
                                str(self.negative_patch_index), 'PNG')
                     # mask.save(PROCESSED_PATCHES_NORMAL_PATH + PATCH_NORMAL_PREFIX + str(self.patch_index),
                     #           'PNG')
@@ -129,7 +111,7 @@ class WSI(object):
 
     def extract_patches_tumor(self, bounding_boxes):
         """
-            Extract both, negative patches from Normal area and positive patches from Tumor area
+            From Tumor WSIs, extract both, negative patches from Normal area and positive patches from Tumor area
 
             Save extracted patches to desk as .png image files
 
@@ -152,8 +134,8 @@ class WSI(object):
             # Y = np.arange(b_y_start, b_y_end-256, 5)
 
             for x, y in zip(X, Y):
-                patch = self.wsi_image.read_region((x, y), 0, (PATCH_SIZE, PATCH_SIZE))
-                mask = self.mask_image.read_region((x, y), 0, (PATCH_SIZE, PATCH_SIZE))
+                patch = self.wsi_image.read_region((x, y), 0, (data.PATCH_SIZE, data.PATCH_SIZE))
+                mask = self.mask_image.read_region((x, y), 0, (data.PATCH_SIZE, data.PATCH_SIZE))
                 mask_gt = np.array(mask)
                 # mask_gt = cv2.cvtColor(mask_gt, cv2.COLOR_BGR2GRAY)
                 mask_gt = cv2.cvtColor(mask_gt, cv2.COLOR_BGR2GRAY)
@@ -168,16 +150,16 @@ class WSI(object):
                     mask_patch = cv2.inRange(patch_hsv, lower_red, upper_red)
                     white_pixel_cnt = cv2.countNonZero(mask_patch)
 
-                    if white_pixel_cnt > ((PATCH_SIZE * PATCH_SIZE) * 0.50):
+                    if white_pixel_cnt > ((data.PATCH_SIZE * data.PATCH_SIZE) * 0.50):
                         # mask = Image.fromarray(mask)
-                        patch.save(PROCESSED_PATCHES_TUMOR_NEGATIVE_PATH + PATCH_NORMAL_PREFIX +
+                        patch.save(data.PROCESSED_PATCHES_TUMOR_NEGATIVE_PATH + data.PATCH_NORMAL_PREFIX +
                                    str(self.negative_patch_index), 'PNG')
                         # mask.save(PROCESSED_PATCHES_NORMAL_PATH + PATCH_NORMAL_PREFIX + str(self.patch_index),
                         #           'PNG')
                         self.negative_patch_index += 1
                 else:  # mask_gt contains tumor area
-                    if white_pixel_cnt_gt >= ((PATCH_SIZE * PATCH_SIZE) * 0.85):
-                        patch.save(PROCESSED_PATCHES_POSITIVE_PATH + PATCH_TUMOR_PREFIX +
+                    if white_pixel_cnt_gt >= ((data.PATCH_SIZE * data.PATCH_SIZE) * 0.85):
+                        patch.save(data.PROCESSED_PATCHES_TUMOR_POSITIVE_PATH + data.PATCH_TUMOR_PREFIX +
                                    str(self.positive_patch_index), 'PNG')
                         self.positive_patch_index += 1
 
@@ -325,7 +307,6 @@ class WSI(object):
         _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         bounding_boxes = [cv2.boundingRect(c) for c in contours]
         contours_rgb_image_array = np.array(rgb_image)
-
         line_color = (255, 0, 0)  # blue color code
         cv2.drawContours(contours_rgb_image_array, contours, -1, line_color, 3)
         # cv2.drawContours(mask_image, contours_mask, -1, line_color, 3)
@@ -350,9 +331,9 @@ class WSI(object):
 
 
 def run_on_mask_data():
-    wsi.wsi_paths = glob.glob(os.path.join(TRAIN_TUMOR_WSI_PATH, '*.tif'))
+    wsi.wsi_paths = glob.glob(os.path.join(data.TUMOR_WSI_PATH, '*.tif'))
     wsi.wsi_paths.sort()
-    wsi.mask_paths = glob.glob(os.path.join(TRAIN_TUMOR_MASK_PATH, '*.tif'))
+    wsi.mask_paths = glob.glob(os.path.join(data.TUMOR_MASK_PATH, '*.tif'))
     wsi.mask_paths.sort()
 
     # wsi.wsi_paths = wsi.wsi_paths[4:5]
@@ -382,9 +363,9 @@ def run_on_mask_data():
 
 
 def run_on_tumor_data():
-    wsi.wsi_paths = glob.glob(os.path.join(TRAIN_TUMOR_WSI_PATH, '*.tif'))
+    wsi.wsi_paths = glob.glob(os.path.join(data.TUMOR_WSI_PATH, '*.tif'))
     wsi.wsi_paths.sort()
-    wsi.mask_paths = glob.glob(os.path.join(TRAIN_TUMOR_MASK_PATH, '*.tif'))
+    wsi.mask_paths = glob.glob(os.path.join(data.TUMOR_MASK_PATH, '*.tif'))
     wsi.mask_paths.sort()
 
     # wsi.wsi_paths = wsi.wsi_paths[84:85]
@@ -416,7 +397,7 @@ def run_on_tumor_data():
 
 
 def run_on_normal_data():
-    wsi.wsi_paths = glob.glob(os.path.join(TRAIN_NORMAL_WSI_PATH, '*.tif'))
+    wsi.wsi_paths = glob.glob(os.path.join(data.NORMAL_WSI_PATH, '*.tif'))
     wsi.wsi_paths.sort()
 
     # wsi.wsi_paths = wsi.wsi_paths[:1]
@@ -448,5 +429,5 @@ if __name__ == '__main__':
     wsi = WSI()
     # run_on_tumor_data()
     # run_on_normal_data()
-    run_on_mask_data()
+    # run_on_mask_data()
 

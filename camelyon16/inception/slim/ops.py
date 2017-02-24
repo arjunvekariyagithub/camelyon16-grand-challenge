@@ -77,7 +77,7 @@ def batch_norm(inputs,
 
   """
   inputs_shape = inputs.get_shape()
-  with tf.variable_op_scope([inputs], scope, 'BatchNorm', reuse=reuse):
+  with tf.variable_scope(scope, 'BatchNorm', [inputs], reuse=reuse):
     axis = list(range(len(inputs_shape) - 1))
     params_shape = inputs_shape[-1:]
     # Allocate parameters for the beta and gamma of the normalization.
@@ -210,7 +210,7 @@ def conv2d(inputs,
     a tensor representing the output of the operation.
 
   """
-  with tf.variable_op_scope([inputs], scope, 'Conv', reuse=reuse):
+  with tf.variable_scope(scope, 'Conv', [inputs], reuse=reuse):
     kernel_h, kernel_w = _two_element_tuple(kernel_size)
     stride_h, stride_w = _two_element_tuple(stride)
     num_filters_in = inputs.get_shape()[-1]
@@ -285,7 +285,7 @@ def fc(inputs,
   Returns:
      the tensor variable representing the result of the series of operations.
   """
-  with tf.variable_op_scope([inputs], scope, 'FC', reuse=reuse):
+  with tf.variable_scope(scope, 'FC', [inputs], reuse=reuse):
     num_units_in = inputs.get_shape()[1]
     weights_shape = [num_units_in, num_units_out]
     weights_initializer = tf.truncated_normal_initializer(stddev=stddev)
@@ -327,7 +327,7 @@ def one_hot_encoding(labels, num_classes, scope=None):
   Returns:
     one hot encoding of the labels.
   """
-  with tf.op_scope([labels], scope, 'OneHotEncoding'):
+  with tf.name_scope(scope, 'OneHotEncoding', [labels]):
     batch_size = labels.get_shape()[0]
     indices = tf.expand_dims(tf.range(0, batch_size), 1)
     labels = tf.cast(tf.expand_dims(labels, 1), indices.dtype)
@@ -361,7 +361,7 @@ def max_pool(inputs, kernel_size, stride=2, padding='VALID', scope=None):
   Raises:
     ValueError: if 'kernel_size' is not a 2-D list
   """
-  with tf.op_scope([inputs], scope, 'MaxPool'):
+  with tf.name_scope(scope, 'MaxPool', [inputs]):
     kernel_h, kernel_w = _two_element_tuple(kernel_size)
     stride_h, stride_w = _two_element_tuple(stride)
     return tf.nn.max_pool(inputs,
@@ -391,7 +391,7 @@ def avg_pool(inputs, kernel_size, stride=2, padding='VALID', scope=None):
   Returns:
     a tensor representing the results of the pooling operation.
   """
-  with tf.op_scope([inputs], scope, 'AvgPool'):
+  with tf.name_scope(scope, 'AvgPool', [inputs]):
     kernel_h, kernel_w = _two_element_tuple(kernel_size)
     stride_h, stride_w = _two_element_tuple(stride)
     return tf.nn.avg_pool(inputs,
@@ -415,7 +415,7 @@ def dropout(inputs, keep_prob=0.5, is_training=True, scope=None):
     a tensor representing the output of the operation.
   """
   if is_training and keep_prob > 0:
-    with tf.op_scope([inputs], scope, 'Dropout'):
+    with tf.name_scope(scope, 'Dropout', [inputs]):
       return tf.nn.dropout(inputs, keep_prob)
   else:
     return inputs
@@ -439,7 +439,7 @@ def flatten(inputs, scope=None):
     raise ValueError('Inputs must be have a least 2 dimensions')
   dims = inputs.get_shape()[1:]
   k = dims.num_elements()
-  with tf.op_scope([inputs], scope, 'Flatten'):
+  with tf.name_scope(scope, 'Flatten', [inputs]):
     return tf.reshape(inputs, [-1, k])
 
 
@@ -466,7 +466,7 @@ def repeat_op(repetitions, inputs, op, *args, **kwargs):
     ValueError: if the op is unknown or wrong.
   """
   scope = kwargs.pop('scope', None)
-  with tf.variable_op_scope([inputs], scope, 'RepeatOp'):
+  with tf.variable_scope(scope, 'RepeatOp', [inputs]):
     tower = inputs
     for _ in range(repetitions):
       tower = op(tower, *args, **kwargs)
