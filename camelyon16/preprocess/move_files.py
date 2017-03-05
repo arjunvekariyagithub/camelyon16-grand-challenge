@@ -1,5 +1,4 @@
 import os
-import glob
 from shutil import copyfile
 
 CAMELYON_PROCESSED_PATCHES_TRAIN = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/Processed/' \

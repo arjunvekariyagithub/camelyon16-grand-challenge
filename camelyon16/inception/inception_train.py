@@ -18,6 +18,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
+
+sys.path.insert(0, '/home/arjun/MS/Thesis/CAMELYON-16/source')
 import copy
 import os.path
 import re
@@ -27,19 +30,18 @@ from datetime import datetime
 import numpy as np
 import tensorflow as tf
 
-import image_processing
-import inception_model as inception
-from dataset import Dataset
-from slim import slim
-
-TRAIN_DIR = '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/[2]SGD-b64'
+from camelyon16.inception import image_processing
+from camelyon16.inception import inception_model as inception
+from camelyon16.inception.dataset import Dataset
+from camelyon16.inception.slim import slim
+import camelyon16.utils as utils
 
 DATA_SET_NAME = 'Camelyon'
 data_subset = ['train', 'validation']
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', TRAIN_DIR,
+tf.app.flags.DEFINE_string('train_dir', utils.TRAIN_DIR,
                            """Directory where to write event logs """
                            """and checkpoint.""")
 tf.app.flags.DEFINE_integer('max_steps', 1000000,  # 1M
@@ -77,7 +79,7 @@ tf.app.flags.DEFINE_float('initial_learning_rate', 0.01,  # 1*e-2
 tf.app.flags.DEFINE_float('num_epochs_per_decay', 30.0,
                           """Epochs after which learning rate decays.""")
 tf.app.flags.DEFINE_integer('num_steps_per_decay', 60000,
-                          """Steps after which learning rate decays.""")
+                            """Steps after which learning rate decays.""")
 
 tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.1,
                           """Learning rate decay factor.""")
@@ -163,11 +165,10 @@ def _average_gradients(tower_grads):
        across all towers.
     """
     average_grads = []
-    for grad_and_vars in zip(*tower_grads):  # take common (i.e var0) variables from all towers
+    for grad_and_vars in zip(*tower_grads):
         # Note that each grad_and_vars looks like the following:
         #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
         grads = []
-        # prepare list of gradients for common variables (i.e var0) of each tower and do average
         for g, _ in grad_and_vars:
             # Add 0 dimension to the gradients to represent the tower.
             expanded_g = tf.expand_dims(g, 0)
@@ -223,10 +224,10 @@ def train(dataset):
 
         # Override the number of preprocessing threads to account for the increased
         # number of GPU towers.
-        num_pre_process_threads = FLAGS.num_preprocess_threads * FLAGS.num_gpus
+        num_preprocess_threads = FLAGS.num_preprocess_threads * FLAGS.num_gpus
         images, labels = image_processing.distorted_inputs(
             dataset,
-            num_preprocess_threads=num_pre_process_threads)
+            num_preprocess_threads=num_preprocess_threads)
 
         print(images.get_shape())
         print(labels.get_shape())
@@ -265,7 +266,7 @@ def train(dataset):
                     # but these stats accumulate extremely fast so we can ignore the
                     # other stats from the other towers without significant detriment.
                     batch_norm_updates = tf.get_collection(slim.ops.UPDATE_OPS_COLLECTION,
-                                                          scope)
+                                                           scope)
 
                     # Calculate the gradients for the batch of data on this ImageNet
                     # tower.

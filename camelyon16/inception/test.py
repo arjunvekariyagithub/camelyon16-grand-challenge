@@ -144,7 +144,7 @@ def image_preprocessing(image_buffer):
 def parse_example_proto(example_serialized):
     """Parses an Example proto containing a training example of an image.
 
-    The output of the build_tf_records.py image preprocessing script is a dataset
+    The output of the build_image_data.py image preprocessing script is a dataset
     containing serialized Example protocol buffers. Each Example proto contains
     the following fields:
 
@@ -207,29 +207,18 @@ def main(unused_argv):
 
         reader = dataset.reader()
         _, example_serialized = reader.read(filename_queue)
-
-        images_and_labels = []
-        for thread_id in range(1):
-            # Parse a serialized Example proto to extract the image and metadata.
-            image_buffer, label_index = parse_example_proto(
-                example_serialized)
-            im, mean = image_preprocessing(image_buffer)
-            image = tf.cast(im, tf.float32)
-            images_and_labels.append([image, label_index])
-
-        images, label_index_batch = tf.train.batch_join(
-            images_and_labels,
-            batch_size=3,
-            capacity=2 * 1 * 3)
+        image_buffer, label_index = parse_example_proto(
+            example_serialized)
+        image, mean = image_preprocessing(image_buffer)
 
         init_op = tf.global_variables_initializer()
         sess.run(init_op)
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
-        images = sess.run(images)
-        print(images.shape)
-        print(images)
+        img, mean = sess.run([image, mean])
+        print(mean)
+        print(img)
 
         coord.request_stop()
         coord.join(threads)

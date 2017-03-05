@@ -84,7 +84,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from slim import scopes
+from camelyon16.inception.slim import scopes
 
 # Collection containing all the variables created using slim.variables
 MODEL_VARIABLES = '_model_variables_'

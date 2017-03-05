@@ -16,9 +16,9 @@
 # pylint: disable=unused-import
 
 # Collapse tf-slim into a single namespace.
-from slim import inception_model as inception
-from slim import losses
-from slim import ops
-from slim import scopes
-from slim import variables
-from slim.scopes import arg_scope
+from camelyon16.inception.slim import inception_model as inception
+from camelyon16.inception.slim import losses
+from camelyon16.inception.slim import ops
+from camelyon16.inception.slim import scopes
+from camelyon16.inception.slim import variables
+from camelyon16.inception.slim.scopes import arg_scope

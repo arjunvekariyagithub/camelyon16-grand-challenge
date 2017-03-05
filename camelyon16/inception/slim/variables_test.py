@@ -19,8 +19,8 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from slim import scopes
-from slim import variables
+from camelyon16.inception.slim import scopes
+from camelyon16.inception.slim import variables
 
 
 class VariablesTest(tf.test.TestCase):

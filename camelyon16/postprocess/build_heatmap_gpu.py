@@ -23,9 +23,7 @@ sys.path.insert(0, '/home/arjun/MS/Thesis/CAMELYON-16/source')
 
 import math
 import os.path
-import time
 from datetime import datetime
-import math
 from PIL import Image
 import matplotlib.pyplot as plt
 
@@ -64,7 +62,7 @@ tf.app.flags.DEFINE_string('subset', 'heatmap',
 # tf.app.flags.DEFINE_integer('batch_size', 40,
 #                             """Number of images to process in a batch.""")
 
-BATCH_SIZE = 200
+BATCH_SIZE = 40
 
 
 def assign_prob(heatmap_rgb, probabilities, coordinates):
@@ -78,63 +76,63 @@ def assign_prob(heatmap_rgb, probabilities, coordinates):
 
 def generate_heatmap(saver, dataset, summary_writer, prob_ops, cords_op, summary_op, heat_map):
     # def _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op, logits, labels, dense_labels):
+    config = tf.ConfigProto(allow_soft_placement=True)
+    config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    sess = tf.Session(config=config)
 
-    with tf.Session() as sess:
-        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
-        if CKPT_PATH is not None:
-            saver.restore(sess, CKPT_PATH)
-            global_step = CKPT_PATH.split('/')[-1].split('-')[-1]
-            print('Successfully loaded model from %s at step=%s.' %
-                  (CKPT_PATH, global_step))
-        elif ckpt and ckpt.model_checkpoint_path:
-            print(ckpt.model_checkpoint_path)
-            if os.path.isabs(ckpt.model_checkpoint_path):
-                # Restores from checkpoint with absolute path.
-                saver.restore(sess, ckpt.model_checkpoint_path)
-            else:
-                # Restores from checkpoint with relative path.
-                saver.restore(sess, os.path.join(FLAGS.checkpoint_dir,
-                                                 ckpt.model_checkpoint_path))
-
-            # Assuming model_checkpoint_path looks something like:
-            #   /my-favorite-path/imagenet_train/model.ckpt-0,
-            # extract global_step from it.
-            global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-            print('Successfully loaded model from %s at step=%s.' %
-                  (ckpt.model_checkpoint_path, global_step))
+    ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
+    if CKPT_PATH is not None:
+        saver.restore(sess, CKPT_PATH)
+        global_step = CKPT_PATH.split('/')[-1].split('-')[-1]
+        print('Successfully loaded model from %s at step=%s.' %
+              (CKPT_PATH, global_step))
+    elif ckpt and ckpt.model_checkpoint_path:
+        print(ckpt.model_checkpoint_path)
+        if os.path.isabs(ckpt.model_checkpoint_path):
+            # Restores from checkpoint with absolute path.
+            saver.restore(sess, ckpt.model_checkpoint_path)
         else:
-            print('No checkpoint file found')
-            return
+            # Restores from checkpoint with relative path.
+            saver.restore(sess, os.path.join(FLAGS.checkpoint_dir,
+                                             ckpt.model_checkpoint_path))
 
-        # Start the queue runners.
-        coord = tf.train.Coordinator()
-        try:
-            threads = []
-            for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
-                threads.extend(qr.create_threads(sess, coord=coord, daemon=True,
-                                                 start=True))
+        # Assuming model_checkpoint_path looks something like:
+        #   /my-favorite-path/imagenet_train/model.ckpt-0,
+        # extract global_step from it.
+        global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+        print('Successfully loaded model from %s at step=%s.' %
+              (ckpt.model_checkpoint_path, global_step))
+    else:
+        print('No checkpoint file found')
+        return
 
-            num_iter = int(math.ceil(dataset.num_examples_per_epoch() / BATCH_SIZE))
-            step = 0
-            print('%s: starting evaluation on (%s).' % (datetime.now(), FLAGS.subset))
-            start_time = time.time()
-            while step < num_iter and not coord.should_stop():
-                probabilities, coordinates = sess.run([prob_ops, cords_op])
-                heat_map = assign_prob(heat_map, probabilities, coordinates)
-                step += 1
-                print('%s: patch processed: %d / %d' % (datetime.now(), step * BATCH_SIZE,
-                                                        dataset.num_examples_per_epoch()))
-                if not ((step * BATCH_SIZE) % 1000):
-                    duration = time.time() - start_time
-                    print('1000 patch process time: %d secs' % math.ceil(duration))
-                    start_time = time.time()
+    # Start the queue runners.
+    coord = tf.train.Coordinator()
+    try:
+        threads = []
+        for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
+            threads.extend(qr.create_threads(sess, coord=coord, daemon=True,
+                                             start=True))
 
-        except Exception as e:  # pylint: disable=broad-except
-            coord.request_stop(e)
+        num_iter = int(math.ceil(dataset.num_examples_per_epoch() / BATCH_SIZE))
+        step = 0
+        print('%s: starting evaluation on (%s).' % (datetime.now(), FLAGS.subset))
 
-        coord.request_stop()
-        coord.join(threads, stop_grace_period_secs=10)
+        while step < num_iter and not coord.should_stop():
+            probabilities, coordinates = sess.run([prob_ops, cords_op])
+            heat_map = assign_prob(heat_map, probabilities, coordinates)
+            step += 1
+            print('%s: patch processed: %d / %d' % (datetime.now(), step * BATCH_SIZE,
+                                                    dataset.num_examples_per_epoch()))
+        print('generate_heatmap() - while loop exit.')
+    except Exception as e:  # pylint: disable=broad-except
+        print('generate_heatmap() - Exception.')
+        coord.request_stop(e)
 
+    coord.request_stop()
+    coord.join(threads, stop_grace_period_secs=10)
+
+    print('generate_heatmap() - returning')
     return heat_map
 
 
@@ -144,14 +142,19 @@ def build_heatmap(dataset, heat_map):
         # Get images and labels from the dataset.
         images, cords = image_processing.inputs(dataset, BATCH_SIZE)
 
+        images_splits = tf.split(images, FLAGS.num_gpus, axis=0)
+
         # Number of classes in the Dataset label set plus 1.
         # Label 0 is reserved for an (unused) background class.
         num_classes = dataset.num_classes()
+        probs = []
+        for i in range(FLAGS.num_gpus):
+            with tf.device('/gpu:%d' % i):
+                with tf.name_scope('%s_%d' % (inception.TOWER_NAME, i)) as scope:
+                    _, _, prob = inception.inference(images_splits[i], num_classes, scope=scope)
+                    probs.append(prob)
 
-        # Build a Graph that computes the logits predictions from the
-        # inference model.
-        _, _, prob_ops = inception.inference(images, num_classes)
-
+        prob_ops = tf.concat_v2(probs, axis=0)
         # Restore the moving average version of the learned variables for eval.
         variable_averages = tf.train.ExponentialMovingAverage(
             inception.MOVING_AVERAGE_DECAY)
@@ -173,11 +176,11 @@ def build_heatmap(dataset, heat_map):
 def main(unused_argv):
     tf_records_file_names = sorted(os.listdir(utils.HEAT_MAP_TF_RECORDS_DIR))
     print(tf_records_file_names)
-    tf_records_file_names = tf_records_file_names[2:3]
+    tf_records_file_names = tf_records_file_names[len(tf_records_file_names) - 1:]
     for wsi_filename in tf_records_file_names:
         print('Generating heatmap for: %s' % wsi_filename)
         tf_records_dir = os.path.join(utils.HEAT_MAP_TF_RECORDS_DIR, wsi_filename)
-        raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
+        # raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
         heatmap_rgb_path = os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_filename)
         assert os.path.exists(heatmap_rgb_path), 'heatmap rgb image %s does not exist' % heatmap_rgb_path
         heatmap_rgb = Image.open(heatmap_rgb_path)
@@ -185,9 +188,10 @@ def main(unused_argv):
         heatmap_rgb = heatmap_rgb[:, :, :1]
         heatmap_rgb = np.reshape(heatmap_rgb, (heatmap_rgb.shape[0], heatmap_rgb.shape[1]))
         heat_map = np.zeros((heatmap_rgb.shape[0], heatmap_rgb.shape[1]), dtype=np.float32)
-        assert os.path.exists(raw_patches_dir), 'raw patches directory %s does not exist' % raw_patches_dir
-        num_patches = len(os.listdir(raw_patches_dir))
-        assert os.path.exists(tf_records_dir), 'tf-records directory %s does not exist' % tf_records_dir
+        # assert os.path.exists(raw_patches_dir), 'directory %s does not exist' % raw_patches_dir
+        # num_patches = len(os.listdir(raw_patches_dir))
+        num_patches = 15294
+        assert os.path.exists(tf_records_dir), 'directory %s does not exist' % tf_records_dir
         dataset = Dataset(DATA_SET_NAME, data_subset[2], tf_records_dir=tf_records_dir, num_patches=num_patches)
         heat_map = build_heatmap(dataset, heat_map)
         # Image.fromarray(heat_map).save(os.path.join(utils.HEAT_MAP_DIR, wsi_filename), 'PNG')
@@ -195,8 +199,8 @@ def main(unused_argv):
         plt.colorbar()
         plt.clim(0.00, 1.00)
         plt.axis([0, heatmap_rgb.shape[1], 0, heatmap_rgb.shape[0]])
-        plt.savefig(str(os.path.join(utils.HEAT_MAP_DIR, wsi_filename))+'_heatmap.png')
         plt.show()
+
 
 if __name__ == '__main__':
     tf.app.run()

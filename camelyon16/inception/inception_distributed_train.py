@@ -29,7 +29,7 @@ import tensorflow as tf
 
 import image_processing
 import inception_model as inception
-from slim import slim
+from camelyon16.inception.slim import slim
 
 FLAGS = tf.app.flags.FLAGS
 

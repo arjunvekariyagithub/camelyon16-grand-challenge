@@ -27,7 +27,7 @@ from __future__ import print_function
 import re
 
 import tensorflow as tf
-from slim import slim
+from camelyon16.inception.slim import slim
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -59,6 +59,7 @@ def inference(images, num_classes, for_training=False, restore_logits=True,
       restore_logits: whether or not the logits layers should be restored.
         Useful for fine-tuning a model with different num_classes.
       scope: optional prefix string identifying the ImageNet tower.
+      reuse: weather to reuse weights or not (used for evaluation)
 
     Returns:
       Logits. 2-D float Tensor.
@@ -78,7 +79,7 @@ def inference(images, num_classes, for_training=False, restore_logits=True,
                             stddev=0.1,
                             activation=tf.nn.relu,
                             batch_norm_params=batch_norm_params):
-            logits, endpoints = slim.inception.inception_v3(
+            logits, end_points = slim.inception.inception_v3(
                 images,
                 dropout_keep_prob=0.8,
                 num_classes=num_classes,
@@ -87,12 +88,12 @@ def inference(images, num_classes, for_training=False, restore_logits=True,
                 scope=scope)
 
     # Add summaries for viewing model statistics on TensorBoard.
-    _activation_summaries(endpoints)
+    _activation_summaries(end_points)
 
     # Grab the logits associated with the side head. Employed during training.
-    auxiliary_logits = endpoints['aux_logits']
+    auxiliary_logits = end_points['aux_logits']
 
-    return logits, auxiliary_logits
+    return logits, auxiliary_logits, end_points['predictions']
 
 
 def loss(logits, labels, batch_size=None):

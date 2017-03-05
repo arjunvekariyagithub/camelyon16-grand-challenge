@@ -33,11 +33,16 @@ class Dataset(object):
     """A simple class for handling data sets."""
     __metaclass__ = ABCMeta
 
-    def __init__(self, name, subset):
+    def __init__(self, name, subset, tf_records_dir=None, num_patches=0):
         """Initialize dataset using a subset and the path to the data."""
         assert subset in self.available_subsets(), self.available_subsets()
         self.name = name
         self.subset = subset
+        self.heatmap_tf_records_dir = tf_records_dir
+        self.heatmap_num_patches = num_patches
+
+    def is_heatmap_data(self):
+        return self.subset == 'heatmap'
 
     def num_classes(self):
         """Returns the number of classes in the data set."""
@@ -47,8 +52,10 @@ class Dataset(object):
         """Returns the number of examples in the data subset."""
         if self.subset == 'train':
             return 250000
-        if self.subset == 'validation':
+        elif self.subset == 'validation':
             return 10000
+        else:  # hear-map
+            return self.heatmap_num_patches
 
     @abstractmethod
     def download_message(self):
@@ -59,12 +66,14 @@ class Dataset(object):
         """Returns the number of examples in one shard."""
         if self.subset == 'train':
             return 1000
-        if self.subset == 'validation':
+        elif self.subset == 'validation':
             return 250
+        else:  # hear-map
+            return self.heatmap_num_patches
 
     def available_subsets(self):
         """Returns the list of available subsets."""
-        return ['train', 'validation']
+        return ['train', 'validation', 'heatmap']
 
     def data_files(self):
         """Returns a python list of all (sharded) data subset files.
@@ -85,7 +94,7 @@ class Dataset(object):
             exit(-1)
         return data_files
 
-    def data_files_test(self):
+    def data_files_heatmap(self):
         """Returns a python list of all (sharded) data subset files.
 
         Returns:
@@ -93,17 +102,18 @@ class Dataset(object):
         Raises:
           ValueError: if there are not data_files matching the subset.
         """
-        tf_record_pattern = os.path.join('/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/'
-                                         'Processed/patch-based-classification/tf-records/', '%s-*' % self.subset)
+        assert self.heatmap_tf_records_dir is not None
+
+        tf_record_pattern = os.path.join(self.heatmap_tf_records_dir, '%s-*' % self.subset)
         data_files = tf.gfile.Glob(tf_record_pattern)
         if not data_files:
             print('No files found for dataset %s/%s at %s' % (self.name,
                                                               self.subset,
-                                                              FLAGS.data_dir))
+                                                              self.heatmap_tf_records_dir))
 
             self.download_message()
             exit(-1)
-        return data_files[:1]
+        return data_files
 
     def reader(self):
         """Return a reader for a single entry from the data set.

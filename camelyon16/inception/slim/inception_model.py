@@ -45,8 +45,8 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from slim import ops
-from slim import scopes
+from camelyon16.inception.slim import ops
+from camelyon16.inception.slim import scopes
 
 
 def inception_v3(inputs,
@@ -54,7 +54,8 @@ def inception_v3(inputs,
                  num_classes=1000,
                  is_training=True,
                  restore_logits=True,
-                 scope=''):
+                 scope='',
+                 reuse=None):
     """Latest Inception from http://arxiv.org/abs/1512.00567.
 
       "Rethinking the Inception Architecture for Computer Vision"
@@ -70,6 +71,7 @@ def inception_v3(inputs,
       restore_logits: whether or not the logits layers should be restored.
         Useful for fine-tuning a model with different num_classes.
       scope: Optional scope for op_scope.
+      reuse: weather to reuse weights or not (used for evaluation)
 
     Returns:
       a list containing 'logits', 'aux_logits' Tensors.

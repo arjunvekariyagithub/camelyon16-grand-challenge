@@ -23,9 +23,9 @@ import tensorflow as tf
 
 from tensorflow.python.ops import control_flow_ops
 
-from slim import ops
-from slim import scopes
-from slim import variables
+from camelyon16.inception.slim import ops
+from camelyon16.inception.slim import scopes
+from camelyon16.inception.slim import variables
 
 
 class ConvTest(tf.test.TestCase):

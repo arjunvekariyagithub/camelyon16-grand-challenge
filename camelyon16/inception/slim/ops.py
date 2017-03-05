@@ -31,9 +31,9 @@ import tensorflow as tf
 
 from tensorflow.python.training import moving_averages
 
-from slim import losses
-from slim import scopes
-from slim import variables
+from camelyon16.inception.slim import losses
+from camelyon16.inception.slim import scopes
+from camelyon16.inception.slim import variables
 
 # Used to keep the update ops done by batch_norm.
 UPDATE_OPS_COLLECTION = '_update_ops_'
@@ -239,7 +239,7 @@ def conv2d(inputs,
                                   shape=bias_shape,
                                   initializer=bias_initializer,
                                   trainable=trainable,
-                                  restore=restore)
+                                  restore=restore, reuse=reuse)
       outputs = tf.nn.bias_add(conv, biases)
     if activation:
       outputs = activation(outputs)
@@ -401,7 +401,7 @@ def avg_pool(inputs, kernel_size, stride=2, padding='VALID', scope=None):
 
 
 @scopes.add_arg_scope
-def dropout(inputs, keep_prob=0.5, is_training=True, scope=None):
+def dropout(inputs, keep_prob=0.5, is_training=True, scope=None, reuse=None):
   """Returns a dropout layer applied to the input.
 
   Args:

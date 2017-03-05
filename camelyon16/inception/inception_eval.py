@@ -18,22 +18,24 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
+sys.path.insert(0, '/home/arjun/MS/Thesis/CAMELYON-16/source')
 import math
 import os.path
 import time
 from datetime import datetime
 
-import image_processing
-import inception_model as inception
+from camelyon16.inception import image_processing
+from camelyon16.inception import inception_model as inception
 import numpy as np
 import sklearn as sk
 import tensorflow as tf
-from dataset import Dataset
+from camelyon16.inception.dataset import Dataset
 from tensorflow.contrib import metrics
 
 FLAGS = tf.app.flags.FLAGS
 
-TRAIN_DIR = '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model3'
+TRAIN_DIR = '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model4'
 EVAL_DIR = '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/evaluation'
 CKPT_PATH = None
 
@@ -184,7 +186,7 @@ def evaluate(dataset):
 
         # Build a Graph that computes the logits predictions from the
         # inference model.
-        logits, _ = inception.inference(images, num_classes)
+        logits, _, _ = inception.inference(images, num_classes)
 
         sparse_labels = tf.reshape(labels, [BATCH_SIZE, 1])
         indices = tf.reshape(tf.range(BATCH_SIZE), [BATCH_SIZE, 1])

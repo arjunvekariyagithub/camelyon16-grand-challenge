@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from slim import inception_model as inception
+from camelyon16.inception.slim import inception_model as inception
 
 
 class InceptionTest(tf.test.TestCase):

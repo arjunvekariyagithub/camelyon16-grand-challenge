@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from slim import slim
+from camelyon16.inception.slim import slim
 
 
 def get_variables(scope=None):

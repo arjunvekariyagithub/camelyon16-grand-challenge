@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 from openslide import OpenSlide, OpenSlideUnsupportedFormatError
-import camelyon16.data as data
+import camelyon16.utils as utils
 
 
 class WSI(object):
@@ -57,7 +57,9 @@ class WSI(object):
             self.mask_image = OpenSlide(mask_path)
 
             level = min(self.def_level, self.wsi_image.level_count - 1, self.mask_image.level_count - 1)
-            print('level used: %d' % level)
+            # print('level used: %d' % level)
+            print(self.wsi_image.level_count)
+            print(self.wsi_image.level_dimensions)
 
             self.rgb_image_pil = self.wsi_image.read_region((0, 0), level,
                                                             self.wsi_image.level_dimensions[level])
@@ -215,9 +217,9 @@ class WSI(object):
 
 def run_on_tumor_data():
     wsi = WSI()
-    wsi.wsi_paths = glob.glob(os.path.join(data.TUMOR_WSI_PATH, '*.tif'))
+    wsi.wsi_paths = glob.glob(os.path.join(utils.TUMOR_WSI_PATH, '*.tif'))
     wsi.wsi_paths.sort()
-    wsi.mask_paths = glob.glob(os.path.join(data.TUMOR_MASK_PATH, '*.tif'))
+    wsi.mask_paths = glob.glob(os.path.join(utils.TUMOR_MASK_PATH, '*.tif'))
     wsi.mask_paths.sort()
     # improved -
     # interesting cases - 43, (71, 73, 84) - diff levels,
@@ -225,10 +227,11 @@ def run_on_tumor_data():
     # self worst -
     # check - 15, 31, 34, 44, 47, 54, 57, 64, 75, 76,
 
-    wsi.index = 0
-    # wsi_paths = wsi.wsi_paths[30:]
-    # wsi.read_wsi(WSI_FILE_NAME)
-    # wsi.find_roi()
+    wsi.index = 109
+    # image_mask_pair = zip(ops.wsi_paths, ops.mask_paths)
+    # image_mask_pair = list(image_mask_pair)
+    # for image_name, mask_name in image_mask_pair:
+    #     ops.read_tumor_wsi(image_name, mask_name)
 
     while True:
         wsi_path = wsi.wsi_paths[wsi.index]
@@ -252,7 +255,7 @@ def run_on_tumor_data():
 
 def run_on_normal_data():
     wsi = WSI()
-    wsi.wsi_paths = glob.glob(os.path.join(data.NORMAL_WSI_PATH, '*.tif'))
+    wsi.wsi_paths = glob.glob(os.path.join(utils.NORMAL_WSI_PATH, '*.tif'))
     wsi.wsi_paths.sort()
     # improved -
     # interesting cases - 43, (71, 73, 84) - diff levels,
@@ -261,9 +264,9 @@ def run_on_normal_data():
     # check - 15, 31, 34, 44, 47, 54, 57, 64, 75, 76,
 
     wsi.index = 0
-    # wsi_paths = wsi.wsi_paths[30:]
-    # wsi.read_wsi(WSI_FILE_NAME)
-    # wsi.find_roi()
+    # wsi_paths = ops.wsi_paths[30:]
+    # ops.read_wsi(WSI_FILE_NAME)
+    # ops.find_roi()
 
     while True:
         wsi_path = wsi.wsi_paths[wsi.index]

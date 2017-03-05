@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from slim import losses
+from camelyon16.inception.slim import losses
 
 
 class LossesTest(tf.test.TestCase):

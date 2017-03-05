@@ -310,6 +310,25 @@ def image_preprocessing(image_buffer, train, thread_id):
     return image
 
 
+def parse_example_proto_heatmap(example_serialized):
+    """
+        Parses an Example proto containing a training example of an image.
+
+    """
+    # Dense features in Example proto.
+    # Arjun - updated
+    feature_map = {
+        'image/encoded': tf.FixedLenFeature([], dtype=tf.string,
+                                            default_value=''),
+        'image/patch_name': tf.FixedLenFeature([], dtype=tf.string,
+                                               default_value='')
+    }
+
+    features = tf.parse_single_example(example_serialized, feature_map)
+
+    return features['image/encoded'], features['image/patch_name']
+
+
 def parse_example_proto(example_serialized):
     """Parses an Example proto containing a training example of an image.
 
@@ -381,7 +400,11 @@ def batch_inputs(dataset, batch_size, train, num_preprocess_threads=None,
       ValueError: if data is not found
     """
     with tf.name_scope('batch_processing'):
-        data_files = dataset.data_files()
+        if dataset.is_heatmap_data():
+            data_files = dataset.data_files_heatmap()
+        else:
+            data_files = dataset.data_files()
+
         if data_files is None:
             raise ValueError('No data files found for this dataset')
 
@@ -444,8 +467,13 @@ def batch_inputs(dataset, batch_size, train, num_preprocess_threads=None,
         images_and_labels = []
         for thread_id in range(num_preprocess_threads):
             # Parse a serialized Example proto to extract the image and metadata.
-            image_buffer, label_index = parse_example_proto(
-                example_serialized)
+            if dataset.is_heatmap_data():
+                image_buffer, label_index = parse_example_proto_heatmap(
+                    example_serialized)
+            else:
+                image_buffer, label_index = parse_example_proto(
+                    example_serialized)
+
             image = image_preprocessing(image_buffer, train, thread_id)
             images_and_labels.append([image, label_index])
 
