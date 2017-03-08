@@ -8,6 +8,9 @@ import os
 
 import tensorflow as tf
 
+import camelyon16.utils as utils
+
+
 PROCESSED_PATCHES_TRAIN = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/Processed/' \
                                    'patch-based-classification/raw-data/train/'
 PROCESSED_PATCHES_TRAIN_NEGATIVE = PROCESSED_PATCHES_TRAIN + 'label-0/'
@@ -18,13 +21,11 @@ PROCESSED_PATCHES_VALIDATION = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELY
 PROCESSED_PATCHES_VALIDATION_NEGATIVE = PROCESSED_PATCHES_VALIDATION + 'label-0/'
 PROCESSED_PATCHES_VALIDATION_POSITIVE = PROCESSED_PATCHES_VALIDATION + 'label-1/'
 
-DATA_DIR = '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/tf-records/'
-
 
 FLAGS = tf.app.flags.FLAGS
 
 # Basic model parameters.
-tf.app.flags.DEFINE_string('data_dir', DATA_DIR,
+tf.app.flags.DEFINE_string('data_dir', utils.TRAIN_TF_RECORDS_DIR,
                            """Path to the processed data, i.e. """
                            """TFRecord of Example protos.""")
 
@@ -51,7 +52,7 @@ class Dataset(object):
     def num_examples_per_epoch(self):
         """Returns the number of examples in the data subset."""
         if self.subset == 'train':
-            return 250000
+            return 310000
         elif self.subset == 'validation':
             return 10000
         else:  # hear-map
@@ -73,7 +74,7 @@ class Dataset(object):
 
     def available_subsets(self):
         """Returns the list of available subsets."""
-        return ['train', 'validation', 'heatmap']
+        return utils.data_subset
 
     def data_files(self):
         """Returns a python list of all (sharded) data subset files.
@@ -85,6 +86,7 @@ class Dataset(object):
         """
         tf_record_pattern = os.path.join(FLAGS.data_dir, '%s-*' % self.subset)
         data_files = tf.gfile.Glob(tf_record_pattern)
+        print(data_files)
         if not data_files:
             print('No files found for dataset %s/%s at %s' % (self.name,
                                                               self.subset,

@@ -74,40 +74,26 @@ import threading
 
 import numpy as np
 import tensorflow as tf
-
-PROCESSED_PATCHES_TRAIN = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/Processed/' \
-                                   'patch-based-classification/raw-data/train/'
-PROCESSED_PATCHES_TRAIN_NEGATIVE = PROCESSED_PATCHES_TRAIN + 'label-0/'
-PROCESSED_PATCHES_TRAIN_POSITIVE = PROCESSED_PATCHES_TRAIN + 'label-1/'
-
-PROCESSED_PATCHES_VALIDATION = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/' \
-                                        'Processed/patch-based-classification/raw-data/validation/'
-PROCESSED_PATCHES_VALIDATION_NEGATIVE = PROCESSED_PATCHES_VALIDATION + 'label-0/'
-PROCESSED_PATCHES_VALIDATION_POSITIVE = PROCESSED_PATCHES_VALIDATION + 'label-1/'
-
-OUTPUT_DIR = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/Processed/' \
-             'patch-based-classification/tf-records/'
+import camelyon16.utils as utils
 
 N_TRAIN_SAMPLES = 250000
 N_VALIDATION_SAMPLES = 10000
 N_SAMPLES_PER_TRAIN_SHARD = 1000
 N_SAMPLES_PER_VALIDATION_SHARD = 250
 
-
-tf.app.flags.DEFINE_string('train_directory', PROCESSED_PATCHES_TRAIN,
-                           'Training data directory')
-tf.app.flags.DEFINE_string('validation_directory', PROCESSED_PATCHES_VALIDATION,
-                           'Validation data directory')
-tf.app.flags.DEFINE_string('output_directory', OUTPUT_DIR,
+tf.app.flags.DEFINE_string('output_directory', utils.TRAIN_TF_RECORDS_DIR,
                            'Output data directory')
 
-tf.app.flags.DEFINE_integer('train_shards', 250,  # N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
+tf.app.flags.DEFINE_integer('train_shards', 60,  # (60 is for augmentation) N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
                             'Number of shards in training TFRecord files.')
 tf.app.flags.DEFINE_integer('validation_shards', 40,  # N_VALIDATION_SAMPLES / N_SAMPLES_PER_VALIDATION_SHARD
                             'Number of shards in validation TFRecord files.')
 
 tf.app.flags.DEFINE_integer('num_threads', 5,
                             'Number of threads to preprocess the images.')
+
+tf.app.flags.DEFINE_boolean('augmentation', True,
+                            'Flag for data augmentation.')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -422,10 +408,12 @@ def main(unused_argv):
     print('Saving results to %s' % FLAGS.output_directory)
 
     # Run it!
-    _process_dataset('validation', FLAGS.validation_directory,
+    _process_dataset(utils.PREFIX_SHARD_AUG_VALIDATION if FLAGS.augmentation else utils.PREFIX_SHARD_VALIDATION,
+                     utils.PATCHES_VALIDATION_AUG_DIR if FLAGS.augmentation else utils.PATCHES_VALIDATION_DIR,
                      FLAGS.validation_shards)
-    _process_dataset('train', FLAGS.train_directory,
-                     FLAGS.train_shards)
+    # _process_dataset(utils.PREFIX_SHARD_AUG_TRAIN if FLAGS.augmentation else utils.PREFIX_SHARD_TRAIN,
+    #                  utils.PATCHES_TRAIN_AUG_DIR if FLAGS.augmentation else utils.PATCHES_TRAIN_DIR,
+    #                  FLAGS.train_shards)
 
 
 if __name__ == '__main__':

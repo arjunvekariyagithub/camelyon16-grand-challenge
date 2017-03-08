@@ -291,7 +291,7 @@ def main(unused_argv):
 
     raw_patches_file_names = sorted(os.listdir(utils.HEAT_MAP_RAW_PATCHES_DIR))
     print(raw_patches_file_names)
-    raw_patches_file_names = raw_patches_file_names[67:68]
+    raw_patches_file_names = raw_patches_file_names[75:76]
 
     for wsi_filename in raw_patches_file_names:
         print('processing: %s' % wsi_filename)

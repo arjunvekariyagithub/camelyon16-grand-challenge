@@ -16,7 +16,7 @@ def extract_positive_patches_from_tumor_wsi(wsi_ops, patch_extractor, patch_inde
 
     image_mask_pair = zip(wsi_paths, mask_paths)
     image_mask_pair = list(image_mask_pair)
-    image_mask_pair = image_mask_pair[67:68]
+    # image_mask_pair = image_mask_pair[67:68]
 
     patch_save_dir = utils.PATCHES_TRAIN_AUG_POSITIVE_PATH if augmentation else utils.PATCHES_TRAIN_POSITIVE_PATH
     patch_prefix = utils.PATCH_AUG_TUMOR_PREFIX if augmentation else utils.PATCH_TUMOR_PREFIX
@@ -26,12 +26,13 @@ def extract_positive_patches_from_tumor_wsi(wsi_ops, patch_extractor, patch_inde
         wsi_image, rgb_image, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path
 
-        bounding_boxes = wsi_ops.find_roi_bb_tumor_gt_mask(np.array(tumor_gt_mask))
+        bounding_boxes = wsi_ops.find_roi_bbox_tumor_gt_mask(np.array(tumor_gt_mask))
 
         patch_index = patch_extractor.extract_positive_patches_from_tumor_region(wsi_image, np.array(tumor_gt_mask),
                                                                                  level_used, bounding_boxes,
                                                                                  patch_save_dir, patch_prefix,
                                                                                  patch_index)
+        print('Positive patch count: %d' % (patch_index - utils.PATCH_INDEX_POSITIVE))
         wsi_image.close()
 
     return patch_index
@@ -45,7 +46,7 @@ def extract_negative_patches_from_tumor_wsi(wsi_ops, patch_extractor, patch_inde
 
     image_mask_pair = zip(wsi_paths, mask_paths)
     image_mask_pair = list(image_mask_pair)
-    image_mask_pair = image_mask_pair[67:68]
+    # image_mask_pair = image_mask_pair[67:68]
 
     patch_save_dir = utils.PATCHES_TRAIN_AUG_NEGATIVE_PATH if augmentation else utils.PATCHES_TRAIN_NEGATIVE_PATH
     patch_prefix = utils.PATCH_AUG_NORMAL_PREFIX if augmentation else utils.PATCH_NORMAL_PREFIX
@@ -54,14 +55,14 @@ def extract_negative_patches_from_tumor_wsi(wsi_ops, patch_extractor, patch_inde
         wsi_image, rgb_image, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path
 
-        bounding_boxes, contour, mask_contour, bbox, image_open = \
-            wsi_ops.find_roi_bb_tumor(np.array(rgb_image), tumor_gt_mask)
+        bounding_boxes, image_open = wsi_ops.find_roi_bbox_tumor(np.array(rgb_image))
 
         patch_index = patch_extractor.extract_negative_patches_from_tumor_wsi(wsi_image, np.array(tumor_gt_mask),
                                                                               image_open, level_used,
                                                                               bounding_boxes, patch_save_dir,
                                                                               patch_prefix,
                                                                               patch_index)
+        print('Negative patches count: %d' % (patch_index - utils.PATCH_INDEX_NEGATIVE))
 
         wsi_image.close()
 
@@ -69,25 +70,36 @@ def extract_negative_patches_from_tumor_wsi(wsi_ops, patch_extractor, patch_inde
 
 
 def extract_negative_patches_from_normal_wsi(wsi_ops, patch_extractor, patch_index, augmentation=False):
+    """
+    Extracted up to Normal_060.
+
+    :param wsi_ops:
+    :param patch_extractor:
+    :param patch_index:
+    :param augmentation:
+    :return:
+    """
     wsi_paths = glob.glob(os.path.join(utils.NORMAL_WSI_PATH, '*.tif'))
     wsi_paths.sort()
 
-    wsi_paths = wsi_paths[67:68]
+    wsi_paths = wsi_paths[61:]
 
-    patch_save_dir = utils.PATCHES_TRAIN_AUG_NEGATIVE_PATH if augmentation else utils.PATCHES_TRAIN_NEGATIVE_PATH
+    patch_save_dir = utils.PATCHES_VALIDATION_AUG_NEGATIVE_PATH if augmentation \
+        else utils.PATCHES_VALIDATION_NEGATIVE_PATH
     patch_prefix = utils.PATCH_AUG_NORMAL_PREFIX if augmentation else utils.PATCH_NORMAL_PREFIX
     for image_path in wsi_paths:
         print('extract_negative_patches_from_normal_wsi(): %s' % utils.get_filename_from_path(image_path))
         wsi_image, rgb_image, level_used = wsi_ops.read_wsi_normal(image_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path
 
-        bounding_boxes, rgb_contour, image_open = wsi_ops.find_roi_bb_normal(np.array(rgb_image))
+        bounding_boxes, image_open = wsi_ops.find_roi_bbox_normal(np.array(rgb_image))
 
         patch_index = patch_extractor.extract_negative_patches_from_normal_wsi(wsi_image, image_open,
                                                                                level_used,
                                                                                bounding_boxes,
                                                                                patch_save_dir, patch_prefix,
                                                                                patch_index)
+        print('Negative patches count: %d' % (patch_index - utils.PATCH_INDEX_NEGATIVE))
 
         wsi_image.close()
 
@@ -95,19 +107,19 @@ def extract_negative_patches_from_normal_wsi(wsi_ops, patch_extractor, patch_ind
 
 
 def extract_patches(ops, pe):
-    patch_index_positive = 200000
-    patch_index_negative = 200000
+    patch_index_positive = utils.PATCH_INDEX_POSITIVE
+    patch_index_negative = utils.PATCH_INDEX_NEGATIVE
     patch_index_negative = extract_negative_patches_from_tumor_wsi(ops, pe, patch_index_negative)
     extract_negative_patches_from_normal_wsi(ops, pe, patch_index_negative)
-    extract_positive_patches_from_tumor_wsi(ops, pe, patch_index_positive)
+    # extract_positive_patches_from_tumor_wsi(ops, pe, patch_index_positive)
 
 
 def extract_patches_augmented(ops, pe):
-    patch_index_positive = 200000
-    patch_index_negative = 200000
-    patch_index_negative = extract_negative_patches_from_tumor_wsi(ops, pe, patch_index_negative, augmentation=True)
+    patch_index_positive = utils.PATCH_INDEX_POSITIVE
+    patch_index_negative = utils.PATCH_INDEX_NEGATIVE
+    # patch_index_negative = extract_negative_patches_from_tumor_wsi(ops, pe, patch_index_negative, augmentation=True)
     extract_negative_patches_from_normal_wsi(ops, pe, patch_index_negative, augmentation=True)
-    extract_positive_patches_from_tumor_wsi(ops, pe, patch_index_positive, augmentation=True)
+    # extract_positive_patches_from_tumor_wsi(ops, pe, patch_index_positive, augmentation=True)
 
 
 if __name__ == '__main__':

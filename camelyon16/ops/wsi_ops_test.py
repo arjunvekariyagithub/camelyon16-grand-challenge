@@ -227,10 +227,10 @@ class WSIOps(object):
         image_close = cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel)
         open_kernel = np.ones((5, 5), dtype=np.uint8)
         image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
-        bounding_boxes = self.get_bbox_normal(image_open)
+        bounding_boxes, rgb_contour = self.get_bbox_normal(image_open, rgb_image)
         return bounding_boxes, image_open
 
-    def find_roi_bbox_tumor(self, rgb_image):
+    def find_roi_bbox_tumor(self, rgb_image, tumor_gt_mask):
         hsv = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2HSV)
         lower_red = np.array([20, 20, 20])
         upper_red = np.array([200, 200, 200])
@@ -240,7 +240,23 @@ class WSIOps(object):
         image_close = cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel)
         open_kernel = np.ones((5, 5), dtype=np.uint8)
         image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
-        bounding_boxes = self.get_bbox_tumor(image_open)
+        bounding_boxes, rgb_contour, mask_contour = self.get_bbox_tumor(image_open, rgb_image, tumor_gt_mask)
+
+        # rgb_bbox = self.draw_bbox(rgb_image, bounding_boxes)
+        # rgb_bbox_split = self.split_bbox(rgb_image, bounding_boxes, image_open)
+
+        # Image.fromarray(rgb_image).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name), 'PNG')
+        # Image.fromarray(rgb_contour).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_contour'), 'PNG')
+        # Image.fromarray(rgb_bbox).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_bbox'), 'PNG')
+        # Image.fromarray(mask_contour).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_mask'), 'PNG')
+
+        # cv2.imshow('contour', rgb_contour)
+        # cv2.imshow('contour_mask', mask_contour)
+        # cv2.imshow('bbox', rgb_bbox)
+        # cv2.imshow('image_open', rgb_bbox_split)
+        # cv2.imshow('mask', mask)
+        # cv2.waitKey(0) & 0xFF
+
         return bounding_boxes, image_open
 
     @staticmethod
@@ -250,16 +266,28 @@ class WSIOps(object):
         return bounding_boxes
 
     @staticmethod
-    def get_bbox_normal(cont_img):
+    def get_bbox_normal(cont_img, image):
+        rgb_contour = image.copy()
         _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        line_color = (255, 0, 0)  # blue color code
+        cv2.drawContours(rgb_contour, contours, -1, line_color, 2)
+
         bounding_boxes = [cv2.boundingRect(c) for c in contours]
-        return bounding_boxes
+
+        return bounding_boxes, rgb_contour
 
     @staticmethod
-    def get_bbox_tumor(cont_img):
+    def get_bbox_tumor(cont_img, image, tumor_gt_mask):
+        rgb_contour = image.copy()
+        mask_contour = tumor_gt_mask.copy()
         _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        line_color = (255, 0, 0)  # blue color code
+        cv2.drawContours(rgb_contour, contours, -1, line_color, 2)
+        cv2.drawContours(mask_contour, contours, -1, line_color, 2)
+
         bounding_boxes = [cv2.boundingRect(c) for c in contours]
-        return bounding_boxes
+
+        return bounding_boxes, rgb_contour, mask_contour
 
     @staticmethod
     def draw_bbox(image, bounding_boxes):

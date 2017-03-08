@@ -60,7 +60,7 @@ tf.app.flags.DEFINE_boolean('fine_tune', False,
                             """If set, randomly initialize the final layer """
                             """of weights in order to train the network on a """
                             """new task.""")
-tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', '',
+tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', utils.FINE_TUNE_MODEL_CKPT_PATH,
                            """If specified, restore this pretrained model """
                            """before beginning any training.""")
 
@@ -229,9 +229,6 @@ def train(dataset):
             dataset,
             num_preprocess_threads=num_preprocess_threads)
 
-        print(images.get_shape())
-        print(labels.get_shape())
-
         input_summaries = copy.copy(tf.get_collection(tf.GraphKeys.SUMMARIES))
 
         # updated - Arjun
@@ -333,7 +330,8 @@ def train(dataset):
         sess.run(init)
 
         if FLAGS.pretrained_model_checkpoint_path:
-            assert tf.gfile.Exists(FLAGS.pretrained_model_checkpoint_path)
+            # assert tf.gfile.Exists(FLAGS.pretrained_model_checkpoint_path)
+            print('model path: %s' % FLAGS.pretrained_model_checkpoint_path)
             variables_to_restore = tf.get_collection(
                 slim.variables.VARIABLES_TO_RESTORE)
             restorer = tf.train.Saver(variables_to_restore)

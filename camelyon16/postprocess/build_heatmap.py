@@ -36,12 +36,9 @@ import tensorflow as tf
 from camelyon16.inception.dataset import Dataset
 from camelyon16 import utils as utils
 
-FLAGS = tf.app.flags.FLAGS
-
-CKPT_PATH = utils.MODEL_CKPT_PATH
+CKPT_PATH = utils.EVAL_MODEL_CKPT_PATH
 
 DATA_SET_NAME = 'TF-Records'
-data_subset = ['train', 'validation', 'heatmap']
 
 tf.app.flags.DEFINE_string('eval_dir', utils.EVAL_DIR,
                            """Directory where to write event logs.""")
@@ -49,8 +46,8 @@ tf.app.flags.DEFINE_string('checkpoint_dir', utils.TRAIN_DIR,
                            """Directory where to read model checkpoints.""")
 
 # Flags governing the frequency of the eval.
-tf.app.flags.DEFINE_integer('num_gpus', 2,
-                            """Number of gpus.""")
+tf.app.flags.DEFINE_integer('num_threads', 5,
+                            """Number of threads.""")
 tf.app.flags.DEFINE_boolean('run_once', True,
                             """Whether to run eval only once.""")
 
@@ -64,15 +61,21 @@ tf.app.flags.DEFINE_string('subset', 'heatmap',
 # tf.app.flags.DEFINE_integer('batch_size', 40,
 #                             """Number of images to process in a batch.""")
 
-BATCH_SIZE = 200
+FLAGS = tf.app.flags.FLAGS
+
+BATCH_SIZE = 100
 
 
 def assign_prob(heatmap_rgb, probabilities, coordinates):
     height = heatmap_rgb.shape[0] - 1
     for prob, cord in zip(probabilities[:, 1:], coordinates):
-        cord = cord.decode('UTF-8')  # each cord is in form - col_row_level
+        cord = cord.decode('UTF-8')
         pixel_pos = cord.split('_')
-        heatmap_rgb[height-int(pixel_pos[1]), int(pixel_pos[0])] = prob
+        # each cord is in form - 'row_col_level' based on wsi coordinate system
+        # need to transform wsi row coordinate in to heatmap row coordinate because, in heatmap row increases
+        # from [bottom -> top] while in wsi row increases from [top -> bottom]
+        # e.g row_heatmap = image_height - row_wsi
+        heatmap_rgb[height-int(pixel_pos[0]), int(pixel_pos[1])] = prob
     return heatmap_rgb
 
 
@@ -148,8 +151,6 @@ def build_heatmap(dataset, heat_map):
         # Label 0 is reserved for an (unused) background class.
         num_classes = dataset.num_classes()
 
-        # Build a Graph that computes the logits predictions from the
-        # inference model.
         _, _, prob_ops = inception.inference(images, num_classes)
 
         # Restore the moving average version of the learned variables for eval.
@@ -173,7 +174,7 @@ def build_heatmap(dataset, heat_map):
 def main(unused_argv):
     tf_records_file_names = sorted(os.listdir(utils.HEAT_MAP_TF_RECORDS_DIR))
     print(tf_records_file_names)
-    tf_records_file_names = tf_records_file_names[2:3]
+    tf_records_file_names = tf_records_file_names[3:4]
     for wsi_filename in tf_records_file_names:
         print('Generating heatmap for: %s' % wsi_filename)
         tf_records_dir = os.path.join(utils.HEAT_MAP_TF_RECORDS_DIR, wsi_filename)
@@ -188,7 +189,7 @@ def main(unused_argv):
         assert os.path.exists(raw_patches_dir), 'raw patches directory %s does not exist' % raw_patches_dir
         num_patches = len(os.listdir(raw_patches_dir))
         assert os.path.exists(tf_records_dir), 'tf-records directory %s does not exist' % tf_records_dir
-        dataset = Dataset(DATA_SET_NAME, data_subset[2], tf_records_dir=tf_records_dir, num_patches=num_patches)
+        dataset = Dataset(DATA_SET_NAME, utils.data_subset[4], tf_records_dir=tf_records_dir, num_patches=num_patches)
         heat_map = build_heatmap(dataset, heat_map)
         # Image.fromarray(heat_map).save(os.path.join(utils.HEAT_MAP_DIR, wsi_filename), 'PNG')
         plt.imshow(heat_map, cmap='hot', interpolation='nearest')
