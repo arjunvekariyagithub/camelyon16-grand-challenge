@@ -45,7 +45,6 @@ class Queue(object):
 
 
 def extract_patch_from_bb(thread_index, bounding_box, wsi_image, image_open, level_used, heat_map_dir):
-    # factor to map low res cords into high res
     """
 
      mapping from (x,y) -> (raw, col)
@@ -53,6 +52,7 @@ def extract_patch_from_bb(thread_index, bounding_box, wsi_image, image_open, lev
      y -> row
 
     """
+    # factor to map low res cords into high res
     mag_factor = pow(2, level_used)
     b_x_start = int(bounding_box[0])
     b_y_start = int(bounding_box[1])
@@ -61,8 +61,6 @@ def extract_patch_from_bb(thread_index, bounding_box, wsi_image, image_open, lev
     col_cords = np.arange(b_x_start, b_x_end)
     row_cords = np.arange(b_y_start, b_y_end)
     print('Apx. patch count for thread(%d): %d' % (thread_index, len(row_cords) * len(col_cords)))
-    # print(min(x_cords), max(x_cords))
-    # print(min(y_cords), max(y_cords))
 
     for row in row_cords:
         for col in col_cords:
@@ -71,27 +69,10 @@ def extract_patch_from_bb(thread_index, bounding_box, wsi_image, image_open, lev
                                                   (utils.PATCH_SIZE, utils.PATCH_SIZE))
                 file_name = str(row) + '_' + str(col) + '_' + str(level_used)
                 wsi_patch.save(os.path.join(heat_map_dir, file_name), 'PNG')
-
-                # patch = np.array(wsi_patch)
-                # # print('Thread(%d) - processing: (%d, %d)' % (thread_index, x, y))
-                # patch_hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
-                # lower_red = np.array([20, 20, 20])
-                # upper_red = np.array([200, 200, 200])
-                # mask = cv2.inRange(patch_hsv, lower_red, upper_red)
-                # white_pixel_cnt = cv2.countNonZero(mask)
-                #
-                # if white_pixel_cnt > ((utils.PATCH_SIZE * utils.PATCH_SIZE) * 0.50):
-                #     # print('Thread(%d) ************ accepted **************' % thread_index)
-                #     file_name = str(x) + '_' + str(y) + '_' + str(level_used) + '_accept'
-                #     Image.fromarray(mask).save(os.path.join(heat_map_dir, file_name), 'PNG')
-                # else:
-                #     file_name = str(x) + '_' + str(y) + '_' + str(level_used) + '_rej'
-                #     Image.fromarray(mask).save(os.path.join(heat_map_dir, file_name), 'PNG')
-
                 wsi_patch.close()
 
 
-def extract_patches(wsi_image_path, wsi_mask_path, wsi_image_name):
+def extract_patches(wsi_image_path, wsi_image_name, wsi_mask_path=None):
     print('extract_patches(): %s' % wsi_image_name)
 
     heatmap_patch_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_image_name)
@@ -101,14 +82,17 @@ def extract_patches(wsi_image_path, wsi_mask_path, wsi_image_name):
         print('patch has already been extracted for: %s' % wsi_image_name)
         return
 
-    '''
-      tmp test: 068,
+    if wsi_mask_path is None:
+        wsi_image, rgb_image, level_used = wsi_ops.read_wsi_normal(wsi_image_path)
+        assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % wsi_image_name
+    else:
+        wsi_image, rgb_image, _, level_used = wsi_ops.read_wsi_tumor(wsi_image_path, wsi_mask_path)
+        assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % wsi_image_name
 
-    '''
-    wsi_image, rgb_image, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(wsi_image_path, wsi_mask_path)
-    assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % wsi_image_name
+    bounding_boxes, image_open = wsi_ops.find_roi_bbox(np.array(rgb_image))
 
-    bounding_boxes, image_open = wsi_ops.find_roi_bbox_tumor(np.array(rgb_image))
+    # Image.fromarray(rgb_image).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name), 'PNG')
+    # Image.fromarray(rgb_contour).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_contour'), 'PNG')
 
     print('No. of ROIs to extract patches from: %d' % len(bounding_boxes))
 
@@ -127,10 +111,7 @@ def extract_patches(wsi_image_path, wsi_mask_path, wsi_image_name):
     sys.stdout.flush()
 
 
-if __name__ == '__main__':
-    # dataset = Dataset(DATA_SET_NAME, data_subset[1])
-    # evaluate(dataset)
-    wsi_ops = WSIOps()
+def extract_patches_tumor():
     wsi_image_names = glob.glob(os.path.join(utils.TUMOR_WSI_PATH, '*.tif'))
     wsi_image_names.sort()
     wsi_mask_names = glob.glob(os.path.join(utils.TUMOR_MASK_PATH, '*.tif'))
@@ -138,6 +119,23 @@ if __name__ == '__main__':
 
     image_mask_pair = zip(wsi_image_names, wsi_mask_names)
     image_mask_pair = list(image_mask_pair)
-    # image_mask_pair = image_mask_pair[67:68]
+    # image_mask_pair = image_mask_pair[1:2]
     for image_path, mask_path in image_mask_pair:
-        extract_patches(image_path, mask_path, utils.get_filename_from_path(image_path))
+        extract_patches(image_path, utils.get_filename_from_path(image_path), mask_path)
+
+
+def extract_patches_normal():
+    wsi_image_names = glob.glob(os.path.join(utils.NORMAL_WSI_PATH, '*.tif'))
+    wsi_image_names.sort()
+
+    # wsi_image_names = wsi_image_names[1:2]
+    for image_path in wsi_image_names:
+        extract_patches(image_path, utils.get_filename_from_path(image_path))
+
+
+if __name__ == '__main__':
+    # dataset = Dataset(DATA_SET_NAME, data_subset[1])
+    # evaluate(dataset)
+    wsi_ops = WSIOps()
+    extract_patches_tumor()
+    # extract_patches_normal()

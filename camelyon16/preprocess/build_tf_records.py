@@ -84,7 +84,7 @@ N_SAMPLES_PER_VALIDATION_SHARD = 250
 tf.app.flags.DEFINE_string('output_directory', utils.TRAIN_TF_RECORDS_DIR,
                            'Output data directory')
 
-tf.app.flags.DEFINE_integer('train_shards', 60,  # (60 is for augmentation) N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
+tf.app.flags.DEFINE_integer('train_shards', 350,  # N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
                             'Number of shards in training TFRecord files.')
 tf.app.flags.DEFINE_integer('validation_shards', 40,  # N_VALIDATION_SAMPLES / N_SAMPLES_PER_VALIDATION_SHARD
                             'Number of shards in validation TFRecord files.')
@@ -92,7 +92,7 @@ tf.app.flags.DEFINE_integer('validation_shards', 40,  # N_VALIDATION_SAMPLES / N
 tf.app.flags.DEFINE_integer('num_threads', 5,
                             'Number of threads to preprocess the images.')
 
-tf.app.flags.DEFINE_boolean('augmentation', True,
+tf.app.flags.DEFINE_boolean('augmentation', False,
                             'Flag for data augmentation.')
 
 FLAGS = tf.app.flags.FLAGS
@@ -382,7 +382,7 @@ def _find_image_files(data_dir):
     file_names = [file_names[i] for i in shuffled_index]
     labels = [labels[i] for i in shuffled_index]
 
-    print('Found %d JPEG files across %d labels inside %s.' %
+    print('Found %d PNG files across %d labels inside %s.' %
           (len(file_names), len(unique_labels), data_dir))
     return file_names, labels
 
@@ -408,12 +408,9 @@ def main(unused_argv):
     print('Saving results to %s' % FLAGS.output_directory)
 
     # Run it!
-    _process_dataset(utils.PREFIX_SHARD_AUG_VALIDATION if FLAGS.augmentation else utils.PREFIX_SHARD_VALIDATION,
-                     utils.PATCHES_VALIDATION_AUG_DIR if FLAGS.augmentation else utils.PATCHES_VALIDATION_DIR,
+    _process_dataset(utils.PREFIX_SHARD_VALIDATION, utils.PATCHES_VALIDATION_DIR,
                      FLAGS.validation_shards)
-    # _process_dataset(utils.PREFIX_SHARD_AUG_TRAIN if FLAGS.augmentation else utils.PREFIX_SHARD_TRAIN,
-    #                  utils.PATCHES_TRAIN_AUG_DIR if FLAGS.augmentation else utils.PATCHES_TRAIN_DIR,
-    #                  FLAGS.train_shards)
+    _process_dataset(utils.PREFIX_SHARD_TRAIN, utils.PATCHES_TRAIN_DIR, FLAGS.train_shards)
 
 
 if __name__ == '__main__':

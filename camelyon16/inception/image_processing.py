@@ -302,11 +302,6 @@ def image_preprocessing(image_buffer, train, thread_id):
     # else:
     #     image = eval_image(image, height, width)
 
-    # Arjun - updated -> already in range [0, 1] so no need to do it again
-    # First, scale scale to [0, 1) and finally scale to [-1,1]
-    # image = tf.divide(image, 255)
-    # image = tf.subtract(image, 0.5)
-    # image = tf.multiply(image, 2.0)
     return image
 
 

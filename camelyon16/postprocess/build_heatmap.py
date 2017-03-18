@@ -32,6 +32,7 @@ import matplotlib.pyplot as plt
 from camelyon16.inception import image_processing
 from camelyon16.inception import inception_model as inception
 import numpy as np
+import cv2
 import tensorflow as tf
 from camelyon16.inception.dataset import Dataset
 from camelyon16 import utils as utils
@@ -66,8 +67,9 @@ FLAGS = tf.app.flags.FLAGS
 BATCH_SIZE = 100
 
 
-def assign_prob(heatmap_rgb, probabilities, coordinates):
-    height = heatmap_rgb.shape[0] - 1
+def assign_prob(heatmap, probabilities, coordinates):
+    global heat_map_prob
+    height = heatmap.shape[0] - 1
     for prob, cord in zip(probabilities[:, 1:], coordinates):
         cord = cord.decode('UTF-8')
         pixel_pos = cord.split('_')
@@ -75,8 +77,9 @@ def assign_prob(heatmap_rgb, probabilities, coordinates):
         # need to transform wsi row coordinate in to heatmap row coordinate because, in heatmap row increases
         # from [bottom -> top] while in wsi row increases from [top -> bottom]
         # e.g row_heatmap = image_height - row_wsi
-        heatmap_rgb[height-int(pixel_pos[0]), int(pixel_pos[1])] = prob
-    return heatmap_rgb
+        heatmap[height-int(pixel_pos[0]), int(pixel_pos[1])] = prob
+        heat_map_prob[int(pixel_pos[0]), int(pixel_pos[1])] = prob
+    return heatmap
 
 
 def generate_heatmap(saver, dataset, summary_writer, prob_ops, cords_op, summary_op, heat_map):
@@ -172,32 +175,47 @@ def build_heatmap(dataset, heat_map):
 
 
 def main(unused_argv):
+    """
+    special case: Tumor_018
+
+    Failded case: Tumor_20, Tumor_25,
+
+    Error: Tumor_068 (due to old patch name (col_row_level), new (row_col_level))
+    """
+    global heat_map_prob
     tf_records_file_names = sorted(os.listdir(utils.HEAT_MAP_TF_RECORDS_DIR))
+    # tf_records_file_names = tf_records_file_names[1:]
     print(tf_records_file_names)
-    tf_records_file_names = tf_records_file_names[3:4]
     for wsi_filename in tf_records_file_names:
         print('Generating heatmap for: %s' % wsi_filename)
+        heatmap_filename = str(os.path.join(utils.HEAT_MAP_DIR, wsi_filename))+'_heatmap.png'
+
+        if os.path.exists(heatmap_filename):
+            print('Heatmap already generated for: %s' % wsi_filename)
+            continue
+
         tf_records_dir = os.path.join(utils.HEAT_MAP_TF_RECORDS_DIR, wsi_filename)
         raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
         heatmap_rgb_path = os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_filename)
         assert os.path.exists(heatmap_rgb_path), 'heatmap rgb image %s does not exist' % heatmap_rgb_path
-        heatmap_rgb = Image.open(heatmap_rgb_path)
-        heatmap_rgb = np.array(heatmap_rgb)
-        heatmap_rgb = heatmap_rgb[:, :, :1]
-        heatmap_rgb = np.reshape(heatmap_rgb, (heatmap_rgb.shape[0], heatmap_rgb.shape[1]))
+        heatmap_rgb = cv2.imread(heatmap_rgb_path)
+        heatmap_rgb = heatmap_rgb[:, :, :3]
         heat_map = np.zeros((heatmap_rgb.shape[0], heatmap_rgb.shape[1]), dtype=np.float32)
+        heat_map_prob = np.zeros((heatmap_rgb.shape[0], heatmap_rgb.shape[1]), dtype=np.float32)
         assert os.path.exists(raw_patches_dir), 'raw patches directory %s does not exist' % raw_patches_dir
         num_patches = len(os.listdir(raw_patches_dir))
         assert os.path.exists(tf_records_dir), 'tf-records directory %s does not exist' % tf_records_dir
         dataset = Dataset(DATA_SET_NAME, utils.data_subset[4], tf_records_dir=tf_records_dir, num_patches=num_patches)
         heat_map = build_heatmap(dataset, heat_map)
-        # Image.fromarray(heat_map).save(os.path.join(utils.HEAT_MAP_DIR, wsi_filename), 'PNG')
-        plt.imshow(heat_map, cmap='hot', interpolation='nearest')
+        plt.imshow(heat_map, cmap='jet', interpolation='nearest')
         plt.colorbar()
         plt.clim(0.00, 1.00)
         plt.axis([0, heatmap_rgb.shape[1], 0, heatmap_rgb.shape[0]])
-        plt.savefig(str(os.path.join(utils.HEAT_MAP_DIR, wsi_filename))+'_heatmap.png')
-        plt.show()
+        plt.savefig(heatmap_filename)
+        # cv2.imwrite(os.path.join(utils.HEAT_MAP_DIR, wsi_filename) + '_prob_flip.png', heat_map*255)
+        cv2.imwrite(os.path.join(utils.HEAT_MAP_DIR, wsi_filename) + '_prob.png', heat_map_prob*255)
+        plt.clf()
 
 if __name__ == '__main__':
+    heat_map_prob = None
     tf.app.run()

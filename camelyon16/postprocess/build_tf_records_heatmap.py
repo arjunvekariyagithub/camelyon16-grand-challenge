@@ -207,17 +207,13 @@ def _process_patches(name, patch_paths, patch_names, wsi_filename):
     """
     assert len(patch_paths) == len(patch_names)
 
+    output_dir = os.path.join(FLAGS.output_directory, wsi_filename)
+
     sys.stdout.flush()
 
     # Create a generic tf-based utility for converting all image codings.
     coder = ImageCoder()
-
     output_filename = '%s-patches-%s' % (name, wsi_filename)
-    output_dir = os.path.join(FLAGS.output_directory, wsi_filename)
-    print(output_dir)
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
     output_file = os.path.join(output_dir, output_filename)
     writer = tf.python_io.TFRecordWriter(output_file)
 
@@ -291,10 +287,18 @@ def main(unused_argv):
 
     raw_patches_file_names = sorted(os.listdir(utils.HEAT_MAP_RAW_PATCHES_DIR))
     print(raw_patches_file_names)
-    raw_patches_file_names = raw_patches_file_names[75:76]
+    # raw_patches_file_names = raw_patches_file_names[8:9]
 
     for wsi_filename in raw_patches_file_names:
         print('processing: %s' % wsi_filename)
+
+        output_dir = os.path.join(FLAGS.output_directory, wsi_filename)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        else:
+            print('tf-records already built for: %s' % wsi_filename)
+            continue
+
         raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
         assert os.path.exists(raw_patches_dir), 'directory %s does not exist' % raw_patches_dir
         _process_dataset('heatmap', raw_patches_dir, wsi_filename)

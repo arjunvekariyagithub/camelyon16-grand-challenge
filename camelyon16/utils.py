@@ -61,12 +61,12 @@ FINE_TUNE_MODEL_CKPT_PATH_LIST = {
 
 EVAL_MODEL_CKPT_PATH_LIST = {
     'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model5/model.ckpt-85000',
-    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/all_models/model5/model.ckpt-85000'
+    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/successful_model/model5/model.ckpt-85000'
 }
 
 TRAIN_DIR_LIST = {
-    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model5/',
-    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/model5/'
+    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model6/',
+    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/model6/'
 }
 
 EVAL_DIR_LIST = {
@@ -87,8 +87,8 @@ EVAL_MODEL_CKPT_PATH = EVAL_MODEL_CKPT_PATH_LIST[user]
 PATCH_SIZE = 256
 PATCH_NORMAL_PREFIX = 'normal_'
 PATCH_TUMOR_PREFIX = 'tumor_'
-PATCH_AUG_NORMAL_PREFIX = 'aug_normal_'
-PATCH_AUG_TUMOR_PREFIX = 'aug_tumor_'
+PATCH_AUG_NORMAL_PREFIX = 'aug_false_normal_'
+PATCH_AUG_TUMOR_PREFIX = 'aug_false_tumor_'
 PREFIX_SHARD_TRAIN = 'train'
 PREFIX_SHARD_AUG_TRAIN = 'train-aug'
 PREFIX_SHARD_VALIDATION = 'validation'
@@ -98,8 +98,12 @@ BATCH_SIZE = 32
 
 NUM_NEGATIVE_PATCHES_FROM_EACH_BBOX = 100
 NUM_POSITIVE_PATCHES_FROM_EACH_BBOX = 500
-PATCH_INDEX_NEGATIVE = 300000
-PATCH_INDEX_POSITIVE = 300000
+PATCH_INDEX_NEGATIVE = 600000
+PATCH_INDEX_POSITIVE = 600000
+
+TUMOR_PROB_THRESHOLD = 0.85
+PIXEL_WHITE = 255
+PIXEL_BLACK = 0
 
 
 def get_filename_from_path(file_path):

@@ -313,7 +313,7 @@ def train(dataset):
                             batch_norm_updates_op)
 
         # Create a saver.
-        saver = tf.train.Saver(tf.all_variables())
+        saver = tf.train.Saver(tf.all_variables(), max_to_keep=100)
 
         # Build the summary operation from the last tower summaries.
         summary_op = tf.summary.merge(summaries)
@@ -370,5 +370,5 @@ def train(dataset):
                 saver.save(sess, checkpoint_path, global_step=step)
 
 
-dataset = Dataset(DATA_SET_NAME, data_subset[0])
+dataset = Dataset(DATA_SET_NAME, utils.data_subset[0])
 train(dataset)

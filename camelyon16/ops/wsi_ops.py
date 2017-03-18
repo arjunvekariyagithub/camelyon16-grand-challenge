@@ -39,10 +39,9 @@ class PatchExtractor(object):
             Y = np.random.random_integers(b_y_start, high=b_y_end, size=utils.NUM_POSITIVE_PATCHES_FROM_EACH_BBOX)
 
             for x, y in zip(X, Y):
-                if int(tumor_gt_mask[y, x]) != 0:
-                    x_large = x * mag_factor
-                    y_large = y * mag_factor
-                    patch = wsi_image.read_region((x_large, y_large), 0, (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                if int(tumor_gt_mask[y, x]) is utils.PIXEL_WHITE:
+                    patch = wsi_image.read_region((x * mag_factor, y * mag_factor), 0,
+                                                  (utils.PATCH_SIZE, utils.PATCH_SIZE))
                     patch.save(patch_save_dir + patch_prefix + str(patch_index), 'PNG')
                     patch_index += 1
                     patch.close()
@@ -82,10 +81,9 @@ class PatchExtractor(object):
             Y = np.random.random_integers(b_y_start, high=b_y_end, size=utils.NUM_NEGATIVE_PATCHES_FROM_EACH_BBOX)
 
             for x, y in zip(X, Y):
-                if int(image_open[y, x]) == 1:
-                    x_large = x * mag_factor
-                    y_large = y * mag_factor
-                    patch = wsi_image.read_region((x_large, y_large), 0, (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                if int(image_open[y, x]) is not utils.PIXEL_BLACK:
+                    patch = wsi_image.read_region((x * mag_factor, y * mag_factor), 0,
+                                                  (utils.PATCH_SIZE, utils.PATCH_SIZE))
                     patch.save(patch_save_dir + patch_prefix + str(patch_index), 'PNG')
                     patch_index += 1
                     patch.close()
@@ -125,14 +123,123 @@ class PatchExtractor(object):
             Y = np.random.random_integers(b_y_start, high=b_y_end, size=utils.NUM_NEGATIVE_PATCHES_FROM_EACH_BBOX)
 
             for x, y in zip(X, Y):
-                if int(image_open[y, x]) == 1:
-                    x_large = x * mag_factor
-                    y_large = y * mag_factor
-                    if int(tumor_gt_mask[y, x]) == 0:  # mask_gt does not contain tumor area
-                        patch = wsi_image.read_region((x_large, y_large), 0, (utils.PATCH_SIZE, utils.PATCH_SIZE))
-                        patch.save(patch_save_dir + patch_prefix + str(patch_index), 'PNG')
-                        patch_index += 1
-                        patch.close()
+                if int(image_open[y, x]) is not utils.PIXEL_BLACK and int(tumor_gt_mask[y, x]) is not utils.PIXEL_WHITE:
+                    # mask_gt does not contain tumor area
+                    patch = wsi_image.read_region((x * mag_factor, y * mag_factor), 0,
+                                                  (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                    patch.save(patch_save_dir + patch_prefix + str(patch_index), 'PNG')
+                    patch_index += 1
+                    patch.close()
+
+        return patch_index
+
+    @staticmethod
+    def extract_patches_from_heatmap_false_region_tumor(wsi_image, tumor_gt_mask, image_open,
+                                                        heatmap_prob,
+                                                        level_used, bounding_boxes,
+                                                        patch_save_dir_pos, patch_save_dir_neg,
+                                                        patch_prefix_pos, patch_prefix_neg,
+                                                        patch_index):
+        """
+
+            From Tumor WSIs extract negative patches from Normal area (reject tumor area)
+                        Save extracted patches to desk as .png image files
+
+            :param wsi_image:
+            :param tumor_gt_mask:
+            :param image_open: morphological open image of wsi_image
+            :param heatmap_prob:
+            :param level_used:
+            :param bounding_boxes: list of bounding boxes corresponds to tumor regions
+            :param patch_save_dir_pos: directory to save positive patches into
+            :param patch_save_dir_neg: directory to save negative patches into
+            :param patch_prefix_pos: prefix for positive patch name
+            :param patch_prefix_neg: prefix for negative patch name
+            :param patch_index:
+            :return:
+        """
+
+        mag_factor = pow(2, level_used)
+        tumor_gt_mask = cv2.cvtColor(tumor_gt_mask, cv2.COLOR_BGR2GRAY)
+        print('No. of ROIs to extract patches from: %d' % len(bounding_boxes))
+
+        for bounding_box in bounding_boxes:
+            b_x_start = int(bounding_box[0])
+            b_y_start = int(bounding_box[1])
+            b_x_end = int(bounding_box[0]) + int(bounding_box[2])
+            b_y_end = int(bounding_box[1]) + int(bounding_box[3])
+            col_cords = np.arange(b_x_start, b_x_end)
+            row_cords = np.arange(b_y_start, b_y_end)
+
+            for row in row_cords:
+                for col in col_cords:
+                    if int(image_open[row, col]) is not utils.PIXEL_BLACK:  # consider pixels from ROI only
+                        # extract patch corresponds to false positives
+                        if heatmap_prob[row, col] >= utils.TUMOR_PROB_THRESHOLD:
+                            if int(tumor_gt_mask[row, col]) is not utils.PIXEL_WHITE:
+                                # mask_gt does not contain tumor area
+                                patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
+                                                              (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                                patch.save(patch_save_dir_neg + patch_prefix_neg + str(patch_index), 'PNG')
+                                patch_index += 1
+                                patch.close()
+                        # extract patch corresponds to false negatives
+                        elif int(tumor_gt_mask[row, col]) is utils.PIXEL_WHITE \
+                                and heatmap_prob[row, col] < utils.TUMOR_PROB_THRESHOLD:
+                            # mask_gt does not contain tumor area
+                            patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
+                                                          (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                            patch.save(patch_save_dir_pos + patch_prefix_pos + str(patch_index), 'PNG')
+                            patch_index += 1
+                            patch.close()
+
+        return patch_index
+
+    @staticmethod
+    def extract_patches_from_heatmap_false_region_normal(wsi_image, image_open,
+                                                         heatmap_prob,
+                                                         level_used, bounding_boxes,
+                                                         patch_save_dir_neg,
+                                                         patch_prefix_neg,
+                                                         patch_index):
+        """
+
+            From Tumor WSIs extract negative patches from Normal area (reject tumor area)
+                        Save extracted patches to desk as .png image files
+
+            :param wsi_image:
+            :param image_open: morphological open image of wsi_image
+            :param heatmap_prob:
+            :param level_used:
+            :param bounding_boxes: list of bounding boxes corresponds to tumor regions
+            :param patch_save_dir_neg: directory to save negative patches into
+            :param patch_prefix_neg: prefix for negative patch name
+            :param patch_index:
+            :return:
+        """
+
+        mag_factor = pow(2, level_used)
+        print('No. of ROIs to extract patches from: %d' % len(bounding_boxes))
+
+        for bounding_box in bounding_boxes:
+            b_x_start = int(bounding_box[0])
+            b_y_start = int(bounding_box[1])
+            b_x_end = int(bounding_box[0]) + int(bounding_box[2])
+            b_y_end = int(bounding_box[1]) + int(bounding_box[3])
+            col_cords = np.arange(b_x_start, b_x_end)
+            row_cords = np.arange(b_y_start, b_y_end)
+
+            for row in row_cords:
+                for col in col_cords:
+                    if int(image_open[row, col]) is not utils.PIXEL_BLACK:  # consider pixels from ROI only
+                        # extract patch corresponds to false positives
+                        if heatmap_prob[row, col] >= utils.TUMOR_PROB_THRESHOLD:
+                            # mask_gt does not contain tumor area
+                            patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
+                                                          (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                            patch.save(patch_save_dir_neg + patch_prefix_neg + str(patch_index), 'PNG')
+                            patch_index += 1
+                            patch.close()
 
         return patch_index
 
@@ -214,49 +321,26 @@ class WSIOps(object):
 
     def find_roi_bbox_tumor_gt_mask(self, mask_image):
         mask = cv2.cvtColor(mask_image, cv2.COLOR_BGR2GRAY)
-        bounding_boxes = self.get_bbox_mask(np.array(mask))
+        bounding_boxes = self.get_bbox(np.array(mask))
         return bounding_boxes
 
-    def find_roi_bbox_normal(self, rgb_image):
+    def find_roi_bbox(self, rgb_image):
+        # hsv -> 3 channel
         hsv = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2HSV)
         lower_red = np.array([20, 20, 20])
         upper_red = np.array([200, 200, 200])
+        # mask -> 1 channel
         mask = cv2.inRange(hsv, lower_red, upper_red)
 
         close_kernel = np.ones((20, 20), dtype=np.uint8)
         image_close = cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel)
         open_kernel = np.ones((5, 5), dtype=np.uint8)
         image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
-        bounding_boxes = self.get_bbox_normal(image_open)
-        return bounding_boxes, image_open
-
-    def find_roi_bbox_tumor(self, rgb_image):
-        hsv = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2HSV)
-        lower_red = np.array([20, 20, 20])
-        upper_red = np.array([200, 200, 200])
-        mask = cv2.inRange(hsv, lower_red, upper_red)
-
-        close_kernel = np.ones((20, 20), dtype=np.uint8)
-        image_close = cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel)
-        open_kernel = np.ones((5, 5), dtype=np.uint8)
-        image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
-        bounding_boxes = self.get_bbox_tumor(image_open)
+        bounding_boxes = self.get_bbox(image_open)
         return bounding_boxes, image_open
 
     @staticmethod
-    def get_bbox_mask(cont_img):
-        _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        bounding_boxes = [cv2.boundingRect(c) for c in contours]
-        return bounding_boxes
-
-    @staticmethod
-    def get_bbox_normal(cont_img):
-        _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        bounding_boxes = [cv2.boundingRect(c) for c in contours]
-        return bounding_boxes
-
-    @staticmethod
-    def get_bbox_tumor(cont_img):
+    def get_bbox(cont_img):
         _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         bounding_boxes = [cv2.boundingRect(c) for c in contours]
         return bounding_boxes

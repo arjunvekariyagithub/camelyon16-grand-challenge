@@ -250,12 +250,12 @@ class WSIOps(object):
         # Image.fromarray(rgb_bbox).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_bbox'), 'PNG')
         # Image.fromarray(mask_contour).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_mask'), 'PNG')
 
-        # cv2.imshow('contour', rgb_contour)
+        cv2.imshow('contour', rgb_contour)
         # cv2.imshow('contour_mask', mask_contour)
         # cv2.imshow('bbox', rgb_bbox)
         # cv2.imshow('image_open', rgb_bbox_split)
         # cv2.imshow('mask', mask)
-        # cv2.waitKey(0) & 0xFF
+        cv2.waitKey(0) & 0xFF
 
         return bounding_boxes, image_open
 
