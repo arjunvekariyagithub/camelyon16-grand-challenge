@@ -76,7 +76,7 @@ import numpy as np
 import tensorflow as tf
 import camelyon16.utils as utils
 
-N_TRAIN_SAMPLES = 250000
+N_TRAIN_SAMPLES = 310000
 N_VALIDATION_SAMPLES = 10000
 N_SAMPLES_PER_TRAIN_SHARD = 1000
 N_SAMPLES_PER_VALIDATION_SHARD = 250
@@ -84,7 +84,7 @@ N_SAMPLES_PER_VALIDATION_SHARD = 250
 tf.app.flags.DEFINE_string('output_directory', utils.TRAIN_TF_RECORDS_DIR,
                            'Output data directory')
 
-tf.app.flags.DEFINE_integer('train_shards', 350,  # N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
+tf.app.flags.DEFINE_integer('train_shards', 310,  # N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
                             'Number of shards in training TFRecord files.')
 tf.app.flags.DEFINE_integer('validation_shards', 40,  # N_VALIDATION_SAMPLES / N_SAMPLES_PER_VALIDATION_SHARD
                             'Number of shards in validation TFRecord files.')
@@ -362,8 +362,8 @@ def _find_image_files(data_dir):
     label_index = 0
 
     # Construct the list of JPEG files and labels.
-    for text in unique_labels:
-        jpeg_file_path = '%s/%s/*' % (data_dir, text)
+    for label in unique_labels:
+        jpeg_file_path = '%s/%s/*' % (data_dir, label)
         matching_files = tf.gfile.Glob(jpeg_file_path)
 
         labels.extend([label_index] * len(matching_files))

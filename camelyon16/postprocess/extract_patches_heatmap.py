@@ -64,7 +64,7 @@ def extract_patch_from_bb(thread_index, bounding_box, wsi_image, image_open, lev
 
     for row in row_cords:
         for col in col_cords:
-            if int(image_open[row, col]) == 1:
+            if int(image_open[row, col]) is not utils.PIXEL_BLACK:
                 wsi_patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
                                                   (utils.PATCH_SIZE, utils.PATCH_SIZE))
                 file_name = str(row) + '_' + str(col) + '_' + str(level_used)
@@ -86,7 +86,7 @@ def extract_patches(wsi_image_path, wsi_image_name, wsi_mask_path=None):
         wsi_image, rgb_image, level_used = wsi_ops.read_wsi_normal(wsi_image_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % wsi_image_name
     else:
-        wsi_image, rgb_image, _, level_used = wsi_ops.read_wsi_tumor(wsi_image_path, wsi_mask_path)
+        wsi_image, rgb_image, _, _, level_used = wsi_ops.read_wsi_tumor(wsi_image_path, wsi_mask_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % wsi_image_name
 
     bounding_boxes, image_open = wsi_ops.find_roi_bbox(np.array(rgb_image))

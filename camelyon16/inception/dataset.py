@@ -52,7 +52,7 @@ class Dataset(object):
     def num_examples_per_epoch(self):
         """Returns the number of examples in the data subset."""
         if self.subset == 'train':
-            return 350000
+            return 310000
         elif self.subset == 'validation':
             return 10000
         else:  # hear-map

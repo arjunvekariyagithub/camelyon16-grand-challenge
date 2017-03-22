@@ -1,0 +1,22 @@
+Heatmap Analysis:
+
+Tumor slides with many False Positives:
+Tumor_105, Tumor_015, Tumor_020, Tumor_025, Tumor_029, Tumor_033, Tumor_034, Tumor_043, Tumor_055, Tumor_056,
+Tumor_061, Normal_040
+
+Tumor slides with many False Negatives:
+Tumor_044,
+
+Tumor slides with mirror(duplicate regions) and incomplete annotation:
+Tumor_018, Tumor_046, Tumor_054
+
+Normal slides with many False Positives:
+Normal_040, Normal_041, Normal_063, Normal_066, Normal_075, Normal_077, Normal_086, Normal_091, Normal_093,
+Normal_103, Normal_109,  Normal_114, Normal_131, Normal_136, Normal_141,
+
+Normal special case (big tumor region):
+Normal_144,
+
+TO DO:
+Check mismatch between patch coordinates and tumor_gt coordinates.
+i.e Does each pixel in small tumor_gt corresponds to top left tile from 512 x 512 region or something else?

@@ -134,7 +134,7 @@ class PatchExtractor(object):
         return patch_index
 
     @staticmethod
-    def extract_patches_from_heatmap_false_region_tumor(wsi_image, tumor_gt_mask, image_open,
+    def extract_patches_from_heatmap_false_region_tumor(wsi_image, wsi_mask, tumor_gt_mask, image_open,
                                                         heatmap_prob,
                                                         level_used, bounding_boxes,
                                                         patch_save_dir_pos, patch_save_dir_neg,
@@ -146,6 +146,7 @@ class PatchExtractor(object):
                         Save extracted patches to desk as .png image files
 
             :param wsi_image:
+            :param wsi_mask:
             :param tumor_gt_mask:
             :param image_open: morphological open image of wsi_image
             :param heatmap_prob:
@@ -176,22 +177,36 @@ class PatchExtractor(object):
                     if int(image_open[row, col]) is not utils.PIXEL_BLACK:  # consider pixels from ROI only
                         # extract patch corresponds to false positives
                         if heatmap_prob[row, col] >= utils.TUMOR_PROB_THRESHOLD:
-                            if int(tumor_gt_mask[row, col]) is not utils.PIXEL_WHITE:
+                            if int(tumor_gt_mask[row, col]) == utils.PIXEL_BLACK:
                                 # mask_gt does not contain tumor area
-                                patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
-                                                              (utils.PATCH_SIZE, utils.PATCH_SIZE))
-                                patch.save(patch_save_dir_neg + patch_prefix_neg + str(patch_index), 'PNG')
-                                patch_index += 1
-                                patch.close()
+                                mask = wsi_mask.read_region((col * mag_factor, row * mag_factor), 0,
+                                                            (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                                mask_gt = cv2.cvtColor(np.array(mask), cv2.COLOR_BGR2GRAY)
+                                white_pixel_cnt_gt = cv2.countNonZero(mask_gt)
+                                if white_pixel_cnt_gt == 0:
+                                    patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
+                                                                  (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                                    patch.save(patch_save_dir_neg + patch_prefix_neg + str(patch_index), 'PNG')
+                                    patch_index += 1
+                                    patch.close()
+
+                                mask.close()
                         # extract patch corresponds to false negatives
-                        elif int(tumor_gt_mask[row, col]) is utils.PIXEL_WHITE \
+                        elif int(tumor_gt_mask[row, col]) is not utils.PIXEL_BLACK \
                                 and heatmap_prob[row, col] < utils.TUMOR_PROB_THRESHOLD:
                             # mask_gt does not contain tumor area
-                            patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
-                                                          (utils.PATCH_SIZE, utils.PATCH_SIZE))
-                            patch.save(patch_save_dir_pos + patch_prefix_pos + str(patch_index), 'PNG')
-                            patch_index += 1
-                            patch.close()
+                            mask = wsi_mask.read_region((col * mag_factor, row * mag_factor), 0,
+                                                        (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                            mask_gt = cv2.cvtColor(np.array(mask), cv2.COLOR_BGR2GRAY)
+                            white_pixel_cnt_gt = cv2.countNonZero(mask_gt)
+                            if white_pixel_cnt_gt >= ((utils.PATCH_SIZE * utils.PATCH_SIZE) * 0.85):
+                                patch = wsi_image.read_region((col * mag_factor, row * mag_factor), 0,
+                                                              (utils.PATCH_SIZE, utils.PATCH_SIZE))
+                                patch.save(patch_save_dir_pos + patch_prefix_pos + str(patch_index), 'PNG')
+                                patch_index += 1
+                                patch.close()
+
+                            mask.close()
 
         return patch_index
 
@@ -306,18 +321,18 @@ class WSIOps(object):
                                                        wsi_image.level_dimensions[level_used]))
 
             mask_level = wsi_mask.level_count - 1
-            mask_image = wsi_mask.read_region((0, 0), mask_level,
-                                              wsi_image.level_dimensions[mask_level])
+            tumor_gt_mask = wsi_mask.read_region((0, 0), mask_level,
+                                                 wsi_image.level_dimensions[mask_level])
             resize_factor = float(1.0 / pow(2, level_used - mask_level))
             # print('resize_factor: %f' % resize_factor)
-            mask_image = cv2.resize(np.array(mask_image), (0, 0), fx=resize_factor, fy=resize_factor)
+            tumor_gt_mask = cv2.resize(np.array(tumor_gt_mask), (0, 0), fx=resize_factor, fy=resize_factor)
 
-            wsi_mask.close()
+            # wsi_mask.close()
         except OpenSlideUnsupportedFormatError:
             print('Exception: OpenSlideUnsupportedFormatError')
             return None, None, None, None
 
-        return wsi_image, rgb_image, mask_image, level_used
+        return wsi_image, rgb_image, wsi_mask, tumor_gt_mask, level_used
 
     def find_roi_bbox_tumor_gt_mask(self, mask_image):
         mask = cv2.cvtColor(mask_image, cv2.COLOR_BGR2GRAY)

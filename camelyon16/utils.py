@@ -3,6 +3,7 @@ import getpass
 users = ['arjun', 'millpc']
 
 user = getpass.getuser()
+print('user: %s' % user)
 
 assert user in users, 'User not Authorised!!'
 
@@ -25,6 +26,8 @@ PATCHES_TRAIN_AUG_DIR = DATA_DIR + 'Processed/patch-based-classification/raw-dat
 PATCHES_VALIDATION_AUG_DIR = DATA_DIR + 'Processed/patch-based-classification/raw-data-aug/validation/'
 PATCHES_TRAIN_AUG_NEGATIVE_PATH = PATCHES_TRAIN_AUG_DIR + 'label-0/'
 PATCHES_TRAIN_AUG_POSITIVE_PATH = PATCHES_TRAIN_AUG_DIR + 'label-1/'
+PATCHES_TRAIN_AUG_EXCLUDE_MIRROR_WSI_NEGATIVE_PATH = PATCHES_TRAIN_AUG_DIR + 'exclude-mirror-label-0/'
+PATCHES_TRAIN_AUG_EXCLUDE_MIRROR_WSI_POSITIVE_PATH = PATCHES_TRAIN_AUG_DIR + 'exclude-mirror-label-1/'
 PATCHES_VALIDATION_AUG_NEGATIVE_PATH = PATCHES_VALIDATION_AUG_DIR + 'label-0/'
 PATCHES_VALIDATION_AUG_POSITIVE_PATH = PATCHES_VALIDATION_AUG_DIR + 'label-1/'
 
@@ -60,13 +63,13 @@ FINE_TUNE_MODEL_CKPT_PATH_LIST = {
 }
 
 EVAL_MODEL_CKPT_PATH_LIST = {
-    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model5/model.ckpt-85000',
-    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/successful_model/model5/model.ckpt-85000'
+    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model6/model.ckpt-300000',
+    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/all_models/model6/model.ckpt-300000'
 }
 
 TRAIN_DIR_LIST = {
-    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model6/',
-    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/model6/'
+    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model7/',
+    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/all_models/model7/'
 }
 
 EVAL_DIR_LIST = {
@@ -98,10 +101,10 @@ BATCH_SIZE = 32
 
 NUM_NEGATIVE_PATCHES_FROM_EACH_BBOX = 100
 NUM_POSITIVE_PATCHES_FROM_EACH_BBOX = 500
-PATCH_INDEX_NEGATIVE = 600000
-PATCH_INDEX_POSITIVE = 600000
+PATCH_INDEX_NEGATIVE = 700000
+PATCH_INDEX_POSITIVE = 700000
 
-TUMOR_PROB_THRESHOLD = 0.85
+TUMOR_PROB_THRESHOLD = 0.90
 PIXEL_WHITE = 255
 PIXEL_BLACK = 0
 

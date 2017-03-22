@@ -36,7 +36,7 @@ from tensorflow.contrib import metrics
 
 FLAGS = tf.app.flags.FLAGS
 
-CKPT_PATH = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/model5/model.ckpt-65000'
+CKPT_PATH = utils.EVAL_MODEL_CKPT_PATH
 
 DATA_SET_NAME = 'TF-Records'
 
@@ -61,7 +61,7 @@ tf.app.flags.DEFINE_string('subset', 'validation',
 # tf.app.flags.DEFINE_integer('batch_size', 40,
 #                             """Number of images to process in a batch.""")
 
-BATCH_SIZE = 80
+BATCH_SIZE = 100
 
 
 def _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op):
@@ -77,28 +77,31 @@ def _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op)
       summary_op: Summary op.
     """
     with tf.Session() as sess:
-        ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
+        print(FLAGS.checkpoint_dir)
+        ckpt = None
         if CKPT_PATH is not None:
             saver.restore(sess, CKPT_PATH)
             global_step = CKPT_PATH.split('/')[-1].split('-')[-1]
             print('Succesfully loaded model from %s at step=%s.' %
                   (CKPT_PATH, global_step))
-        elif ckpt and ckpt.model_checkpoint_path:
-            print(ckpt.model_checkpoint_path)
-            if os.path.isabs(ckpt.model_checkpoint_path):
-                # Restores from checkpoint with absolute path.
-                saver.restore(sess, ckpt.model_checkpoint_path)
-            else:
-                # Restores from checkpoint with relative path.
-                saver.restore(sess, os.path.join(FLAGS.checkpoint_dir,
-                                                 ckpt.model_checkpoint_path))
+        elif ckpt is None:
+            ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
+            if ckpt and ckpt.model_checkpoint_path:
+                print(ckpt.model_checkpoint_path)
+                if os.path.isabs(ckpt.model_checkpoint_path):
+                    # Restores from checkpoint with absolute path.
+                    saver.restore(sess, ckpt.model_checkpoint_path)
+                else:
+                    # Restores from checkpoint with relative path.
+                    saver.restore(sess, os.path.join(FLAGS.checkpoint_dir,
+                                                     ckpt.model_checkpoint_path))
 
-            # Assuming model_checkpoint_path looks something like:
-            #   /my-favorite-path/imagenet_train/model.ckpt-0,
-            # extract global_step from it.
-            global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-            print('Succesfully loaded model from %s at step=%s.' %
-                  (ckpt.model_checkpoint_path, global_step))
+                # Assuming model_checkpoint_path looks something like:
+                #   /my-favorite-path/imagenet_train/model.ckpt-0,
+                # extract global_step from it.
+                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+                print('Succesfully loaded model from %s at step=%s.' %
+                      (ckpt.model_checkpoint_path, global_step))
         else:
             print('No checkpoint file found')
             return
@@ -113,9 +116,9 @@ def _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op)
 
             num_iter = int(math.ceil(FLAGS.num_examples / BATCH_SIZE))
             # Counts the number of correct predictions.
-            total_correct_count = 0.0
-            total_false_positive_count = 0.0
-            total_false_negative_count = 0.0
+            total_correct_count = 0
+            total_false_positive_count = 0
+            total_false_negative_count = 0
             total_sample_count = num_iter * BATCH_SIZE
             step = 0
 
@@ -129,12 +132,15 @@ def _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op)
                 #     sess.run([accuracy, confusion_matrix_op, logits, labels, dense_labels])
 
                 total_correct_count += np.sum(correct_count)
-                # total_false_positive_count += false_positive
-                # total_false_negative_count += false_negative
+                total_false_positive_count += confusion_matrix[0][1]
+                total_false_negative_count += confusion_matrix[1][0]
 
                 print('correct_count(step=%d): %d / %d' % (step, total_correct_count, BATCH_SIZE * (step + 1)))
                 print('\nconfusion_matrix:')
                 print(confusion_matrix)
+                print('total_false_positive_count: %d' % total_false_positive_count)
+                print('total_false_negative_count: %d' % total_false_negative_count)
+
                 step += 1
                 if step % 20 == 0:
                     duration = time.time() - start_time
@@ -222,5 +228,5 @@ def evaluate(dataset):
             time.sleep(FLAGS.eval_interval_secs)
 
 
-dataset = Dataset(DATA_SET_NAME, utils.data_subset[3])
+dataset = Dataset(DATA_SET_NAME, utils.data_subset[2])
 evaluate(dataset)

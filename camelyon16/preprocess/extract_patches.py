@@ -81,16 +81,29 @@ def extract_patches_from_heatmap_false_region_tumor(wsi_ops, patch_extractor, pa
 
     image_mask_heatmap_tuple = zip(wsi_paths, mask_paths, tumor_heatmap_prob_paths)
     image_mask_heatmap_tuple = list(image_mask_heatmap_tuple)
-    # image_mask_pair = image_mask_pair[67:68]
+    # image_mask_heatmap_tuple = image_mask_heatmap_tuple[32:]
 
-    patch_save_dir_pos = utils.PATCHES_TRAIN_AUG_POSITIVE_PATH if augmentation else utils.PATCHES_TRAIN_POSITIVE_PATH
+    # delete Tumor slides with mirror(duplicate regions) and incomplete annotation: Tumor_018, Tumor_046, Tumor_054
+    delete_index = [17, 45, 53]
+    for i in range(len(delete_index)):
+        print('deleting: %s' % utils.get_filename_from_path(image_mask_heatmap_tuple[delete_index[i] - i][0]))
+        del image_mask_heatmap_tuple[delete_index[i] - i]
+
+    patch_save_dir_pos = utils.PATCHES_TRAIN_AUG_EXCLUDE_MIRROR_WSI_POSITIVE_PATH if augmentation else utils.PATCHES_TRAIN_POSITIVE_PATH
     patch_prefix_pos = utils.PATCH_AUG_TUMOR_PREFIX if augmentation else utils.PATCH_TUMOR_PREFIX
-    patch_save_dir_neg = utils.PATCHES_TRAIN_AUG_NEGATIVE_PATH if augmentation else utils.PATCHES_TRAIN_NEGATIVE_PATH
+    patch_save_dir_neg = utils.PATCHES_TRAIN_AUG_EXCLUDE_MIRROR_WSI_NEGATIVE_PATH if augmentation else utils.PATCHES_TRAIN_NEGATIVE_PATH
     patch_prefix_neg = utils.PATCH_AUG_NORMAL_PREFIX if augmentation else utils.PATCH_NORMAL_PREFIX
+    not_0_255_cnt = 0
     for image_path, mask_path, heatmap_prob_path in image_mask_heatmap_tuple:
-        print('extract_patches_from_heatmap_false_region_tumor(): %s' % utils.get_filename_from_path(image_path))
-        wsi_image, rgb_image, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
+        print('extract_patches_from_heatmap_false_region_normal(): %s, %s, %s' %
+              (utils.get_filename_from_path(image_path), utils.get_filename_from_path(mask_path),
+               utils.get_filename_from_path(heatmap_prob_path)))
+
+        wsi_image, rgb_image, wsi_mask, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path
+        # tumor_gt_mask = cv2.cvtColor(tumor_gt_mask, cv2.COLOR_BGR2GRAY)
+        # not_0_255_cnt += (tumor_gt_mask[tumor_gt_mask != 255].shape[0]-tumor_gt_mask[tumor_gt_mask == 0].shape[0])
+        # print(tumor_gt_mask[tumor_gt_mask != 255].shape[0], tumor_gt_mask[tumor_gt_mask == 0].shape[0], not_0_255_cnt)
 
         bounding_boxes, image_open = wsi_ops.find_roi_bbox(np.array(rgb_image))
 
@@ -100,7 +113,8 @@ def extract_patches_from_heatmap_false_region_tumor(wsi_ops, patch_extractor, pa
         heatmap_prob = np.array(heatmap_prob, dtype=np.float32)
         heatmap_prob /= 255
 
-        patch_index = patch_extractor.extract_patches_from_heatmap_false_region_tumor(wsi_image, tumor_gt_mask,
+        patch_index = patch_extractor.extract_patches_from_heatmap_false_region_tumor(wsi_image, wsi_mask,
+                                                                                      tumor_gt_mask,
                                                                                       image_open,
                                                                                       heatmap_prob,
                                                                                       level_used, bounding_boxes,
@@ -112,7 +126,9 @@ def extract_patches_from_heatmap_false_region_tumor(wsi_ops, patch_extractor, pa
         print('patch count: %d' % (patch_index - utils.PATCH_INDEX_NEGATIVE))
 
         wsi_image.close()
+        wsi_mask.close()
 
+    # print('not_0_255_cnt: %d' % not_0_255_cnt)
     return patch_index
 
 
@@ -130,7 +146,9 @@ def extract_patches_from_heatmap_false_region_normal(wsi_ops, patch_extractor, p
     patch_save_dir_neg = utils.PATCHES_TRAIN_AUG_NEGATIVE_PATH if augmentation else utils.PATCHES_TRAIN_NEGATIVE_PATH
     patch_prefix_neg = utils.PATCH_AUG_NORMAL_PREFIX if augmentation else utils.PATCH_NORMAL_PREFIX
     for image_path, heatmap_prob_path in image_heatmap_tuple:
-        print('extract_patches_from_heatmap_false_region_normal(): %s' % utils.get_filename_from_path(image_path))
+        print('extract_patches_from_heatmap_false_region_normal(): %s, %s' % (utils.get_filename_from_path(image_path)
+              , utils.get_filename_from_path(heatmap_prob_path)))
+
         wsi_image, rgb_image, level_used = wsi_ops.read_wsi_normal(image_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path
 
@@ -204,10 +222,13 @@ def extract_patches(ops, pe):
 def extract_patches_augmented(ops, pe):
     patch_index_positive = utils.PATCH_INDEX_POSITIVE
     patch_index_negative = utils.PATCH_INDEX_NEGATIVE
-    # patch_index_negative = extract_patches_from_heatmap_false_region_tumor(ops, pe, patch_index_negative,
-    #                                                                        augmentation=True)
-    patch_index_negative = extract_patches_from_heatmap_false_region_normal(ops, pe, patch_index_negative,
-                                                                            augmentation=True)
+    # index - 500000
+    # index - 700000 -> remove wrong false positives
+    patch_index_negative = extract_patches_from_heatmap_false_region_tumor(ops, pe, patch_index_negative,
+                                                                           augmentation=True)
+    # index - 600000
+    # patch_index_negative = extract_patches_from_heatmap_false_region_normal(ops, pe, patch_index_negative,
+    #                                                                         augmentation=True)
     # patch_index_negative = extract_negative_patches_from_tumor_wsi(ops, pe, patch_index_negative, augmentation=True)
     # extract_negative_patches_from_normal_wsi(ops, pe, patch_index_negative, augmentation=True)
     # extract_positive_patches_from_tumor_wsi(ops, pe, patch_index_positive, augmentation=True)
