@@ -1,13 +1,13 @@
+import glob
 import os
-from shutil import copyfile
 import random
 import sys
-import glob
+from shutil import copyfile
+
 import camelyon16.utils as utils
 
 
 def copy_all(from_dir, to_dir, file_names, name_pattern):
-
     if name_pattern is not None:
         print('moving files with pattern: %s' % name_pattern)
         file_paths = glob.glob(os.path.join(from_dir, name_pattern))
@@ -37,7 +37,7 @@ def copy_files(from_dir, to_dir, name_pattern=None, n_sample=None):
         copy_all(from_dir, to_dir, file_names, name_pattern)
     else:
         assert len(file_names) >= n_sample, "Not enough files to copy. available: %d, requested: %d" % \
-                                           (len(file_names), n_sample)
+                                            (len(file_names), n_sample)
 
         if name_pattern is None:
             shuffled_index = list(range(len(file_names)))
@@ -64,7 +64,6 @@ def copy_files(from_dir, to_dir, name_pattern=None, n_sample=None):
 
 
 def move_all(from_dir, to_dir, file_names, name_pattern):
-
     if name_pattern is not None:
         print('moving files with pattern: %s' % name_pattern)
         file_paths = glob.glob(os.path.join(from_dir, name_pattern))
@@ -94,7 +93,7 @@ def move_files(from_dir, to_dir, name_pattern=None, n_sample=None):
         move_all(from_dir, to_dir, file_names, name_pattern)
     else:
         assert len(file_names) >= n_sample, "Not enough files to move. available: %d, requested: %d" % \
-                                           (len(file_names), n_sample)
+                                            (len(file_names), n_sample)
         if name_pattern is None:
             shuffled_index = list(range(len(file_names)))
             random.seed(12345)
@@ -121,7 +120,6 @@ def move_files(from_dir, to_dir, name_pattern=None, n_sample=None):
 
 
 def delete_all(from_dir, file_names, name_pattern):
-
     if name_pattern is not None:
         print('deleting files with pattern: %s' % name_pattern)
         file_paths = glob.glob(os.path.join(from_dir, name_pattern))
@@ -178,6 +176,7 @@ def delete_files(from_dir, name_pattern=None, n_sample=None):
 def search(search_dir, name_pattern='*'):
     file_paths = glob.glob(os.path.join(search_dir, name_pattern))
     print("Found %d files with pattern '%s' into '%s'." % (len(file_paths), name_pattern, search_dir))
+    return len(file_paths)
 
 
 def perform_ops():
@@ -193,8 +192,33 @@ def perform_ops():
     # move_files(utils.PATCHES_TRAIN_POSITIVE_PATH, utils.PATCHES_VALIDATION_POSITIVE_PATH,
     #            name_pattern='aug_false_tumor*', n_sample=46)
     # delete_files(utils.PATCHES_VALIDATION_NEGATIVE_PATH, 'normal_*', 476)
-    search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'normal_*')
-    delete_files(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'normal_*', 2182)
+    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'normal_*')
+    # search(utils.PATCHES_VALIDATION_POSITIVE_PATH, 'tumor_*')
+    # search(utils.PATCHES_VALIDATION_NEGATIVE_PATH, 'aug_normal_*')
+    # search(utils.PATCHES_VALIDATION_NEGATIVE_PATH, 'normal_*')
+    # move_files(utils.PATCHES_TRAIN_POSITIVE_PATH, utils.PATCHES_VALIDATION_POSITIVE_PATH,
+    #            n_sample=5000)
+    # move_files(utils.PATCHES_TRAIN_NEGATIVE_PATH, utils.PATCHES_VALIDATION_NEGATIVE_PATH,
+    #            name_pattern='normal_*', n_sample=2750)
+    # move_files(utils.PATCHES_TRAIN_NEGATIVE_PATH, utils.PATCHES_VALIDATION_NEGATIVE_PATH,
+    #            name_pattern='aug_normal_*', n_sample=1500)
+    # move_files(utils.PATCHES_TRAIN_NEGATIVE_PATH, utils.PATCHES_VALIDATION_NEGATIVE_PATH,
+    #            name_pattern='aug_false_normal*', n_sample=750)
+    # delete_files(utils.PATCHES_VALIDATION_NEGATIVE_PATH)
+    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH)
+    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'aug_false_normal*')
+    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'normal_*')
+
+    wsi_names = os.listdir(utils.HEAT_MAP_RAW_PATCHES_DIR)
+    total_patches = 0
+    for wsi_filename in wsi_names:
+        raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
+        total_patches += search(raw_patches_dir)
+    print('Total heatmap patches: %d' % total_patches)
+    #
+    # search(utils.PATCHES_TRAIN_POSITIVE_PATH, 'tumor_*')
+    # search(utils.PATCHES_VALIDATION_POSITIVE_PATH, 'tumor_*')
+
 
 if __name__ == '__main__':
     perform_ops()

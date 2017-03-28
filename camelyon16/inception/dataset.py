@@ -52,9 +52,9 @@ class Dataset(object):
     def num_examples_per_epoch(self):
         """Returns the number of examples in the data subset."""
         if self.subset == 'train':
-            return 310000
+            return utils.N_TRAIN_SAMPLES
         elif self.subset == 'validation':
-            return 10000
+            return utils.N_VALIDATION_SAMPLES
         else:  # hear-map
             return self.heatmap_num_patches
 
@@ -66,9 +66,9 @@ class Dataset(object):
     def num_examples_per_shard(self):
         """Returns the number of examples in one shard."""
         if self.subset == 'train':
-            return 1000
+            return utils.N_SAMPLES_PER_TRAIN_SHARD
         elif self.subset == 'validation':
-            return 250
+            return utils.N_SAMPLES_PER_VALIDATION_SHARD
         else:  # hear-map
             return self.heatmap_num_patches
 

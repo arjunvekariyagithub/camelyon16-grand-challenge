@@ -58,18 +58,23 @@ HEAT_MAP_DIR_LIST = {
 }
 
 FINE_TUNE_MODEL_CKPT_PATH_LIST = {
-    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model3/model.ckpt-60000',
-    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/successful_model/model3/model.ckpt-60000'
+    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model5/model.ckpt-95000',
+    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/successful_model/model5/model.ckpt-95000'
 }
 
 EVAL_MODEL_CKPT_PATH_LIST = {
-    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model6/model.ckpt-300000',
-    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/all_models/model6/model.ckpt-300000'
+    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model8/model.ckpt-90000',
+    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/all_models/model8/model.ckpt-90000'
+}
+
+HEATMAP_MODEL_CKPT_PATH = {
+    'model5': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/successful_model/model5/model.ckpt-95000',
+    'model8': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/successful_model/model8/model.ckpt-90000'
 }
 
 TRAIN_DIR_LIST = {
-    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model7/',
-    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/all_models/model7/'
+    'arjun': '/home/arjun/MS/Thesis/CAMELYON-16/Data/Processed/training/model8/',
+    'millpc': '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/training/all_models/model8/'
 }
 
 EVAL_DIR_LIST = {
@@ -87,6 +92,9 @@ HEAT_MAP_DIR = HEAT_MAP_DIR_LIST[user]
 FINE_TUNE_MODEL_CKPT_PATH = FINE_TUNE_MODEL_CKPT_PATH_LIST[user]
 EVAL_MODEL_CKPT_PATH = EVAL_MODEL_CKPT_PATH_LIST[user]
 
+heatmap_models = ['model5', 'model8']
+FIRST_HEATMAP_MODEL = 'model5'
+SECOND_HEATMAP_MODEL = 'model8'
 PATCH_SIZE = 256
 PATCH_NORMAL_PREFIX = 'normal_'
 PATCH_TUMOR_PREFIX = 'tumor_'
@@ -98,6 +106,11 @@ PREFIX_SHARD_VALIDATION = 'validation'
 PREFIX_SHARD_AUG_VALIDATION = 'validation-aug'
 
 BATCH_SIZE = 32
+
+N_TRAIN_SAMPLES = 288000
+N_VALIDATION_SAMPLES = 10000
+N_SAMPLES_PER_TRAIN_SHARD = 1000
+N_SAMPLES_PER_VALIDATION_SHARD = 250
 
 NUM_NEGATIVE_PATCHES_FROM_EACH_BBOX = 100
 NUM_POSITIVE_PATCHES_FROM_EACH_BBOX = 500

@@ -76,20 +76,18 @@ import numpy as np
 import tensorflow as tf
 import camelyon16.utils as utils
 
-N_TRAIN_SAMPLES = 310000
-N_VALIDATION_SAMPLES = 10000
-N_SAMPLES_PER_TRAIN_SHARD = 1000
-N_SAMPLES_PER_VALIDATION_SHARD = 250
-
 tf.app.flags.DEFINE_string('output_directory', utils.TRAIN_TF_RECORDS_DIR,
                            'Output data directory')
 
-tf.app.flags.DEFINE_integer('train_shards', 310,  # N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
+tf.app.flags.DEFINE_integer('train_shards', 288,  # N_TRAIN_SAMPLES / N_SAMPLES_PER_TRAIN_SHARD
                             'Number of shards in training TFRecord files.')
 tf.app.flags.DEFINE_integer('validation_shards', 40,  # N_VALIDATION_SAMPLES / N_SAMPLES_PER_VALIDATION_SHARD
                             'Number of shards in validation TFRecord files.')
 
-tf.app.flags.DEFINE_integer('num_threads', 5,
+tf.app.flags.DEFINE_integer('num_train_threads', 6,
+                            'Number of threads to preprocess the images.')
+
+tf.app.flags.DEFINE_integer('num_val_threads', 5,
                             'Number of threads to preprocess the images.')
 
 tf.app.flags.DEFINE_boolean('augmentation', False,
@@ -282,7 +280,7 @@ def _process_image_files_batch(coder, thread_index, ranges, name, file_names, la
     sys.stdout.flush()
 
 
-def _process_image_files(name, file_names, labels, num_shards):
+def _process_image_files(name, file_names, labels, num_shards, num_threads):
     """Process and save list of images as TFRecord of Example protos.
 
     Args:
@@ -295,13 +293,13 @@ def _process_image_files(name, file_names, labels, num_shards):
     assert len(file_names) == len(labels)
 
     # Break all images into batches with a [ranges[i][0], ranges[i][1]].
-    spacing = np.linspace(0, len(file_names), FLAGS.num_threads + 1).astype(np.int)
+    spacing = np.linspace(0, len(file_names), num_threads + 1).astype(np.int)
     ranges = []
     for i in range(len(spacing) - 1):
         ranges.append([spacing[i], spacing[i + 1]])
 
     # Launch a thread for each batch.
-    print('Launching %d threads for spacings: %s' % (FLAGS.num_threads, ranges))
+    print('Launching %d threads for spacings: %s' % (num_threads, ranges))
     sys.stdout.flush()
 
     # Create a mechanism for monitoring when all threads are finished.
@@ -387,7 +385,7 @@ def _find_image_files(data_dir):
     return file_names, labels
 
 
-def _process_dataset(name, directory, num_shards):
+def _process_dataset(name, directory, num_shards, num_threads):
     """Process a complete data set and save it as a TFRecord.
 
     Args:
@@ -396,21 +394,21 @@ def _process_dataset(name, directory, num_shards):
       num_shards: integer number of shards for this data set.
     """
     file_names, labels = _find_image_files(directory)
-    _process_image_files(name, file_names, labels, num_shards)
+    _process_image_files(name, file_names, labels, num_shards, num_threads)
 
 
 def main(unused_argv):
-    assert not FLAGS.train_shards % FLAGS.num_threads, (
-        'Please make the FLAGS.num_threads commensurate with FLAGS.train_shards')
-    assert not FLAGS.validation_shards % FLAGS.num_threads, (
-        'Please make the FLAGS.num_threads commensurate with '
+    assert not FLAGS.train_shards % FLAGS.num_train_threads, (
+        'Please make the num_threads commensurate with FLAGS.train_shards')
+    assert not FLAGS.validation_shards % FLAGS.num_val_threads, (
+        'Please make the num_threads commensurate with '
         'FLAGS.validation_shards')
     print('Saving results to %s' % FLAGS.output_directory)
 
     # Run it!
     _process_dataset(utils.PREFIX_SHARD_VALIDATION, utils.PATCHES_VALIDATION_DIR,
-                     FLAGS.validation_shards)
-    _process_dataset(utils.PREFIX_SHARD_TRAIN, utils.PATCHES_TRAIN_DIR, FLAGS.train_shards)
+                     FLAGS.validation_shards, FLAGS.num_val_threads)
+    _process_dataset(utils.PREFIX_SHARD_TRAIN, utils.PATCHES_TRAIN_DIR, FLAGS.train_shards, FLAGS.num_train_threads)
 
 
 if __name__ == '__main__':

@@ -37,7 +37,6 @@ from camelyon16.inception.slim import slim
 import camelyon16.utils as utils
 
 DATA_SET_NAME = 'Camelyon'
-data_subset = ['train', 'validation']
 
 FLAGS = tf.app.flags.FLAGS
 

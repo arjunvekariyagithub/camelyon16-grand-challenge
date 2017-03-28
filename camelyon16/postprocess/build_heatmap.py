@@ -19,14 +19,13 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
+
 sys.path.insert(0, '/home/arjun/MS/Thesis/CAMELYON-16/source')
 
-import math
 import os.path
 import time
 from datetime import datetime
 import math
-from PIL import Image
 import matplotlib.pyplot as plt
 
 from camelyon16.inception import image_processing
@@ -36,8 +35,6 @@ import cv2
 import tensorflow as tf
 from camelyon16.inception.dataset import Dataset
 from camelyon16 import utils as utils
-
-CKPT_PATH = utils.EVAL_MODEL_CKPT_PATH
 
 DATA_SET_NAME = 'TF-Records'
 
@@ -77,37 +74,41 @@ def assign_prob(heatmap, probabilities, coordinates):
         # need to transform wsi row coordinate in to heatmap row coordinate because, in heatmap row increases
         # from [bottom -> top] while in wsi row increases from [top -> bottom]
         # e.g row_heatmap = image_height - row_wsi
-        heatmap[height-int(pixel_pos[0]), int(pixel_pos[1])] = prob
+        heatmap[height - int(pixel_pos[0]), int(pixel_pos[1])] = prob
         heat_map_prob[int(pixel_pos[0]), int(pixel_pos[1])] = prob
     return heatmap
 
 
-def generate_heatmap(saver, dataset, summary_writer, prob_ops, cords_op, summary_op, heat_map):
+def generate_heatmap(saver, dataset, model_name, prob_ops, cords_op, heat_map):
     # def _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op, logits, labels, dense_labels):
 
     with tf.Session() as sess:
-        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
-        if CKPT_PATH is not None:
-            saver.restore(sess, CKPT_PATH)
-            global_step = CKPT_PATH.split('/')[-1].split('-')[-1]
-            print('Successfully loaded model from %s at step=%s.' %
-                  (CKPT_PATH, global_step))
-        elif ckpt and ckpt.model_checkpoint_path:
-            print(ckpt.model_checkpoint_path)
-            if os.path.isabs(ckpt.model_checkpoint_path):
-                # Restores from checkpoint with absolute path.
-                saver.restore(sess, ckpt.model_checkpoint_path)
-            else:
-                # Restores from checkpoint with relative path.
-                saver.restore(sess, os.path.join(FLAGS.checkpoint_dir,
-                                                 ckpt.model_checkpoint_path))
+        print(FLAGS.checkpoint_dir)
+        ckpt_path = utils.HEATMAP_MODEL_CKPT_PATH[model_name]
+        ckpt = None
+        if ckpt_path is not None:
+            saver.restore(sess, ckpt_path)
+            global_step = ckpt_path.split('/')[-1].split('-')[-1]
+            print('Succesfully loaded model from %s at step=%s.' %
+                  (ckpt_path, global_step))
+        elif ckpt is None:
+            ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
+            if ckpt and ckpt.model_checkpoint_path:
+                print(ckpt.model_checkpoint_path)
+                if os.path.isabs(ckpt.model_checkpoint_path):
+                    # Restores from checkpoint with absolute path.
+                    saver.restore(sess, ckpt.model_checkpoint_path)
+                else:
+                    # Restores from checkpoint with relative path.
+                    saver.restore(sess, os.path.join(FLAGS.checkpoint_dir,
+                                                     ckpt.model_checkpoint_path))
 
-            # Assuming model_checkpoint_path looks something like:
-            #   /my-favorite-path/imagenet_train/model.ckpt-0,
-            # extract global_step from it.
-            global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-            print('Successfully loaded model from %s at step=%s.' %
-                  (ckpt.model_checkpoint_path, global_step))
+                # Assuming model_checkpoint_path looks something like:
+                #   /my-favorite-path/imagenet_train/model.ckpt-0,
+                # extract global_step from it.
+                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+                print('Succesfully loaded model from %s at step=%s.' %
+                      (ckpt.model_checkpoint_path, global_step))
         else:
             print('No checkpoint file found')
             return
@@ -144,7 +145,7 @@ def generate_heatmap(saver, dataset, summary_writer, prob_ops, cords_op, summary
     return heat_map
 
 
-def build_heatmap(dataset, heat_map):
+def build_heatmap(dataset, heat_map, model_name):
     """Evaluate model on Dataset for a number of steps."""
     with tf.Graph().as_default():
         # Get images and labels from the dataset.
@@ -169,12 +170,12 @@ def build_heatmap(dataset, heat_map):
         summary_writer = tf.summary.FileWriter(FLAGS.eval_dir, graph_def=graph_def)
 
         # _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op, logits, labels, dense_labels)
-        heat_map = generate_heatmap(saver, dataset, summary_writer, prob_ops, cords, summary_op, heat_map)
+        heat_map = generate_heatmap(saver, dataset, model_name, prob_ops, cords, heat_map)
 
         return heat_map
 
 
-def main(unused_argv):
+def generate_all_heatmap(model_name, heatmap_name_postfix, heatmap_prob_name_postfix):
     """
     special case: Tumor_018
 
@@ -183,15 +184,20 @@ def main(unused_argv):
     Error: Tumor_068 (due to old patch name (col_row_level), new (row_col_level))
     """
     global heat_map_prob
+    assert model_name in utils.heatmap_models, utils.heatmap_models
+
     tf_records_file_names = sorted(os.listdir(utils.HEAT_MAP_TF_RECORDS_DIR))
     # tf_records_file_names = tf_records_file_names[1:]
     print(tf_records_file_names)
     for wsi_filename in tf_records_file_names:
+        # if wsi_filename != 'Tumor_020':
+        #     continue
+
         print('Generating heatmap for: %s' % wsi_filename)
-        heatmap_filename = str(os.path.join(utils.HEAT_MAP_DIR, wsi_filename))+'_heatmap.png'
+        heatmap_filename = str(os.path.join(utils.HEAT_MAP_DIR, wsi_filename)) + heatmap_name_postfix
 
         if os.path.exists(heatmap_filename):
-            print('Heatmap already generated for: %s' % wsi_filename)
+            print('%s heatmap already generated for: %s' % (model_name, wsi_filename))
             continue
 
         tf_records_dir = os.path.join(utils.HEAT_MAP_TF_RECORDS_DIR, wsi_filename)
@@ -206,16 +212,28 @@ def main(unused_argv):
         num_patches = len(os.listdir(raw_patches_dir))
         assert os.path.exists(tf_records_dir), 'tf-records directory %s does not exist' % tf_records_dir
         dataset = Dataset(DATA_SET_NAME, utils.data_subset[4], tf_records_dir=tf_records_dir, num_patches=num_patches)
-        heat_map = build_heatmap(dataset, heat_map)
+        heat_map = build_heatmap(dataset, heat_map, model_name)
         plt.imshow(heat_map, cmap='jet', interpolation='nearest')
         plt.colorbar()
         plt.clim(0.00, 1.00)
         plt.axis([0, heatmap_rgb.shape[1], 0, heatmap_rgb.shape[0]])
         plt.savefig(heatmap_filename)
-        # cv2.imwrite(os.path.join(utils.HEAT_MAP_DIR, wsi_filename) + '_prob_flip.png', heat_map*255)
-        cv2.imwrite(os.path.join(utils.HEAT_MAP_DIR, wsi_filename) + '_prob.png', heat_map_prob*255)
+        cv2.imwrite(os.path.join(utils.HEAT_MAP_DIR, wsi_filename) + heatmap_prob_name_postfix, heat_map_prob * 255)
         plt.clf()
+
+
+def build_first_heatmap():
+    generate_all_heatmap(utils.FIRST_HEATMAP_MODEL, heatmap_name_postfix='_heatmap.png',
+                         heatmap_prob_name_postfix='_prob.png')
+
+
+def build_second_heatmap():
+    generate_all_heatmap(utils.SECOND_HEATMAP_MODEL,
+                         heatmap_name_postfix='_heatmap_%s.png' % utils.SECOND_HEATMAP_MODEL,
+                         heatmap_prob_name_postfix='_prob_%s.png' % utils.SECOND_HEATMAP_MODEL)
+
 
 if __name__ == '__main__':
     heat_map_prob = None
-    tf.app.run()
+    build_first_heatmap()
+    build_second_heatmap()
