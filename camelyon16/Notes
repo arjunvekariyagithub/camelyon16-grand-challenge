@@ -1,3 +1,19 @@
+Heatmap feature extraction:
+
+Weather to extract features corresponds to only largest tumor region or from all regions?
+
+Feature list:
+-> (5*5 = 25) max, mean, variance, skewness, and kurtosis of (area, perimeter, compactness(?),
+   rectangularity(extent), solidity of tumor regions)
+-> average prediction across tumor region
+-> total number of tumor regions
+-> total number pixels with probability greater than 0.90
+-> including the percentage of tumor region over the whole tissue region
+
+
+
+
+**************************************************************************************************************
 Heatmap Analysis:
 
 Tumor slides with many False Positives:
@@ -17,10 +33,16 @@ Normal_103, Normal_109,  Normal_114, Normal_131, Normal_136, Normal_141,
 Normal special case (big tumor region):
 Normal_144,
 
+**************************************************************************************************************
 TO DO:
+Apply threshold(0.90) to old (model5) heatmaps and check at what extent it eliminates false positives
+(false positives might have prob < 0.90)
+
 Check mismatch between patch coordinates and tumor_gt coordinates.
 i.e Does each pixel in small tumor_gt corresponds to top left tile from 512 x 512 region or something else?
 
 How to remove heatmap False positives?
 Generate heatmap using model5 and then remove false positives using model8
 (i.e turn positive pixels into negative which satisfies condition, prob_model5 >= 0.9 and prob_model8 <= 0.5)
+
+**************************************************************************************************************

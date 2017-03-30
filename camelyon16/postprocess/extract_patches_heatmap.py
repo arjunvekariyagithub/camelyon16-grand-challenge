@@ -89,10 +89,10 @@ def extract_patches(wsi_image_path, wsi_image_name, wsi_mask_path=None):
         wsi_image, rgb_image, _, _, level_used = wsi_ops.read_wsi_tumor(wsi_image_path, wsi_mask_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % wsi_image_name
 
-    bounding_boxes, image_open = wsi_ops.find_roi_bbox(np.array(rgb_image))
+    bounding_boxes, rgb_contour, image_open = wsi_ops.find_roi_bbox(np.array(rgb_image))
 
-    # Image.fromarray(rgb_image).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name), 'PNG')
-    # Image.fromarray(rgb_contour).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_contour'), 'PNG')
+    Image.fromarray(rgb_image).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name), 'PNG')
+    Image.fromarray(rgb_contour).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_contour'), 'PNG')
 
     print('No. of ROIs to extract patches from: %d' % len(bounding_boxes))
 
@@ -133,9 +133,19 @@ def extract_patches_normal():
         extract_patches(image_path, utils.get_filename_from_path(image_path))
 
 
+def extract_patches_test():
+    wsi_image_names = glob.glob(os.path.join(utils.TEST_WSI_PATH, '*.tif'))
+    wsi_image_names.sort()
+    print(wsi_image_names)
+    # wsi_image_names = wsi_image_names[1:2]
+    for image_path in wsi_image_names:
+        extract_patches(image_path, utils.get_filename_from_path(image_path))
+
+
 if __name__ == '__main__':
     # dataset = Dataset(DATA_SET_NAME, data_subset[1])
     # evaluate(dataset)
     wsi_ops = WSIOps()
-    extract_patches_tumor()
+    # extract_patches_tumor()
     # extract_patches_normal()
+    extract_patches_test()

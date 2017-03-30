@@ -2,6 +2,7 @@ import glob
 import os
 import random
 import sys
+import collections
 from shutil import copyfile
 
 import camelyon16.utils as utils
@@ -209,12 +210,14 @@ def perform_ops():
     # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'aug_false_normal*')
     # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'normal_*')
 
-    wsi_names = os.listdir(utils.HEAT_MAP_RAW_PATCHES_DIR)
+    file_paths = glob.glob(os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, '*'))
+    file_paths.sort()
     total_patches = 0
-    for wsi_filename in wsi_names:
-        raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
-        total_patches += search(raw_patches_dir)
-    print('Total heatmap patches: %d' % total_patches)
+    n_patches_dic = {}
+    for file_path in file_paths:
+        n_patches_dic[utils.get_filename_from_path(file_path)] = search(file_path)
+
+    print(n_patches_dic)
     #
     # search(utils.PATCHES_TRAIN_POSITIVE_PATH, 'tumor_*')
     # search(utils.PATCHES_VALIDATION_POSITIVE_PATH, 'tumor_*')

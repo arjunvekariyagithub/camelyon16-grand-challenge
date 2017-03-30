@@ -24,7 +24,7 @@ def extract_positive_patches_from_tumor_wsi(wsi_ops, patch_extractor, patch_inde
 
     for image_path, mask_path in image_mask_pair:
         print('extract_positive_patches_from_tumor_wsi(): %s' % utils.get_filename_from_path(image_path))
-        wsi_image, rgb_image, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
+        wsi_image, rgb_image, _, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path
 
         bounding_boxes = wsi_ops.find_roi_bbox_tumor_gt_mask(np.array(tumor_gt_mask))
@@ -53,7 +53,7 @@ def extract_negative_patches_from_tumor_wsi(wsi_ops, patch_extractor, patch_inde
     patch_prefix = utils.PATCH_AUG_NORMAL_PREFIX if augmentation else utils.PATCH_NORMAL_PREFIX
     for image_path, mask_path in image_mask_pair:
         print('extract_negative_patches_from_tumor_wsi(): %s' % utils.get_filename_from_path(image_path))
-        wsi_image, rgb_image, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
+        wsi_image, rgb_image, _, tumor_gt_mask, level_used = wsi_ops.read_wsi_tumor(image_path, mask_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path
 
         bounding_boxes, image_open = wsi_ops.find_roi_bbox(np.array(rgb_image))
@@ -147,7 +147,8 @@ def extract_patches_from_heatmap_false_region_normal(wsi_ops, patch_extractor, p
     patch_prefix_neg = utils.PATCH_AUG_NORMAL_PREFIX if augmentation else utils.PATCH_NORMAL_PREFIX
     for image_path, heatmap_prob_path in image_heatmap_tuple:
         print('extract_patches_from_heatmap_false_region_normal(): %s, %s' % (utils.get_filename_from_path(image_path)
-              , utils.get_filename_from_path(heatmap_prob_path)))
+                                                                              , utils.get_filename_from_path(
+            heatmap_prob_path)))
 
         wsi_image, rgb_image, level_used = wsi_ops.read_wsi_normal(image_path)
         assert wsi_image is not None, 'Failed to read Whole Slide Image %s.' % image_path

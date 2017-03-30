@@ -327,7 +327,7 @@ class WSIOps(object):
             # print('resize_factor: %f' % resize_factor)
             tumor_gt_mask = cv2.resize(np.array(tumor_gt_mask), (0, 0), fx=resize_factor, fy=resize_factor)
 
-            # wsi_mask.close()
+            wsi_mask.close()
         except OpenSlideUnsupportedFormatError:
             print('Exception: OpenSlideUnsupportedFormatError')
             return None, None, None, None
@@ -351,14 +351,42 @@ class WSIOps(object):
         image_close = cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel)
         open_kernel = np.ones((5, 5), dtype=np.uint8)
         image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
-        bounding_boxes = self.get_bbox(image_open)
-        return bounding_boxes, image_open
+        bounding_boxes, rgb_contour = self.get_bbox(image_open, rgb_image)
+        return bounding_boxes, rgb_contour, image_open
 
     @staticmethod
-    def get_bbox(cont_img):
+    def get_image_open(wsi_path):
+        try:
+            wsi_image = OpenSlide(wsi_path)
+            level_used = wsi_image.level_count - 1
+            rgb_image = np.array(wsi_image.read_region((0, 0), level_used,
+                                                       wsi_image.level_dimensions[level_used]))
+            wsi_image.close()
+        except OpenSlideUnsupportedFormatError:
+            raise ValueError('Exception: OpenSlideUnsupportedFormatError for %s' % wsi_path)
+
+        # hsv -> 3 channel
+        hsv = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2HSV)
+        lower_red = np.array([20, 20, 20])
+        upper_red = np.array([200, 200, 200])
+        # mask -> 1 channel
+        mask = cv2.inRange(hsv, lower_red, upper_red)
+
+        close_kernel = np.ones((20, 20), dtype=np.uint8)
+        image_close = cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel)
+        open_kernel = np.ones((5, 5), dtype=np.uint8)
+        image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
+
+        return image_open
+
+    @staticmethod
+    def get_bbox(cont_img, image):
+        rgb_contour = image.copy()
         _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        line_color = (255, 0, 0)  # blue color code
+        cv2.drawContours(rgb_contour, contours, -1, line_color, 2)
         bounding_boxes = [cv2.boundingRect(c) for c in contours]
-        return bounding_boxes
+        return bounding_boxes, rgb_contour
 
     @staticmethod
     def draw_bbox(image, bounding_boxes):

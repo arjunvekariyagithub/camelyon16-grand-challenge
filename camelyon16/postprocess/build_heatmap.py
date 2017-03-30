@@ -84,7 +84,7 @@ def generate_heatmap(saver, dataset, model_name, prob_ops, cords_op, heat_map):
 
     with tf.Session() as sess:
         print(FLAGS.checkpoint_dir)
-        ckpt_path = utils.HEATMAP_MODEL_CKPT_PATH[model_name]
+        ckpt_path = utils.get_heatmap_ckpt_path(model_name)
         ckpt = None
         if ckpt_path is not None:
             saver.restore(sess, ckpt_path)
@@ -201,25 +201,26 @@ def generate_all_heatmap(model_name, heatmap_name_postfix, heatmap_prob_name_pos
             continue
 
         tf_records_dir = os.path.join(utils.HEAT_MAP_TF_RECORDS_DIR, wsi_filename)
-        raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
+        assert os.path.exists(tf_records_dir), 'tf-records directory %s does not exist' % tf_records_dir
+        # raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
         heatmap_rgb_path = os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_filename)
         assert os.path.exists(heatmap_rgb_path), 'heatmap rgb image %s does not exist' % heatmap_rgb_path
         heatmap_rgb = cv2.imread(heatmap_rgb_path)
         heatmap_rgb = heatmap_rgb[:, :, :3]
         heat_map = np.zeros((heatmap_rgb.shape[0], heatmap_rgb.shape[1]), dtype=np.float32)
         heat_map_prob = np.zeros((heatmap_rgb.shape[0], heatmap_rgb.shape[1]), dtype=np.float32)
-        assert os.path.exists(raw_patches_dir), 'raw patches directory %s does not exist' % raw_patches_dir
-        num_patches = len(os.listdir(raw_patches_dir))
-        assert os.path.exists(tf_records_dir), 'tf-records directory %s does not exist' % tf_records_dir
+        # assert os.path.exists(raw_patches_dir), 'raw patches directory %s does not exist' % raw_patches_dir
+        # num_patches = len(os.listdir(raw_patches_dir))
+        num_patches = utils.n_patches_dic[wsi_filename]
         dataset = Dataset(DATA_SET_NAME, utils.data_subset[4], tf_records_dir=tf_records_dir, num_patches=num_patches)
         heat_map = build_heatmap(dataset, heat_map, model_name)
-        plt.imshow(heat_map, cmap='jet', interpolation='nearest')
-        plt.colorbar()
-        plt.clim(0.00, 1.00)
-        plt.axis([0, heatmap_rgb.shape[1], 0, heatmap_rgb.shape[0]])
-        plt.savefig(heatmap_filename)
+        # plt.imshow(heat_map, cmap='jet', interpolation='nearest')
+        # plt.colorbar()
+        # plt.clim(0.00, 1.00)
+        # plt.axis([0, heatmap_rgb.shape[1], 0, heatmap_rgb.shape[0]])
+        # plt.savefig(heatmap_filename)
         cv2.imwrite(os.path.join(utils.HEAT_MAP_DIR, wsi_filename) + heatmap_prob_name_postfix, heat_map_prob * 255)
-        plt.clf()
+        # plt.clf()
 
 
 def build_first_heatmap():
@@ -235,5 +236,5 @@ def build_second_heatmap():
 
 if __name__ == '__main__':
     heat_map_prob = None
-    build_first_heatmap()
+    # build_first_heatmap()
     build_second_heatmap()
