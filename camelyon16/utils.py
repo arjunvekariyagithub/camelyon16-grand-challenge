@@ -7,6 +7,10 @@ print('user: %s' % user)
 
 assert user in users, 'User not Authorised!!'
 
+a = ['a', 'b']
+b = a + [1]
+print(b)
+
 data_subset = ['train', 'train-aug', 'validation', 'validation-aug', 'heatmap']
 
 DATA_DIR = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/'
@@ -194,6 +198,10 @@ def get_filename_from_path(file_path):
     path_tokens = file_path.split('/')
     filename = path_tokens[path_tokens.__len__() - 1].split('.')[0]
     return filename
+
+
+def format_2f(number):
+    return float("{0:.2f}".format(number))
 
 
 def step_range(start, end, step):

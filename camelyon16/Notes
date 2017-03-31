@@ -3,14 +3,16 @@ Heatmap feature extraction:
 Weather to extract features corresponds to only largest tumor region or from all regions?
 
 Feature list:
--> (5*5 = 25) max, mean, variance, skewness, and kurtosis of (area, perimeter, compactness(?),
-   rectangularity(extent), solidity of tumor regions)
--> average prediction across tumor region
--> total number of tumor regions
--> total number pixels with probability greater than 0.90
--> including the percentage of tumor region over the whole tissue region
+-> (5*5 = 25) max, mean, variance, skewness, and kurtosis of (area, perimeter, compactness(eccentricity[?]),
+   rectangularity(extent), solidity of tumor regions) (Done)
+-> average prediction across tumor region (Done)
+-> total number of tumor regions (Done)
+-> total number pixels with probability greater than 0.90 (Done)
+-> including the percentage of tumor region over the whole tissue region (Done)
 
 
+Doubts:
+Does 'eccentricity' helps distinguish +ve from -ve?
 
 
 **************************************************************************************************************
