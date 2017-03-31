@@ -7,10 +7,6 @@ print('user: %s' % user)
 
 assert user in users, 'User not Authorised!!'
 
-a = ['a', 'b']
-b = a + [1]
-print(b)
-
 data_subset = ['train', 'train-aug', 'validation', 'validation-aug', 'heatmap']
 
 DATA_DIR = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/'
@@ -170,6 +166,14 @@ n_patches_dic = {'Normal_085': 3640, 'Normal_094': 8016, 'Normal_077': 7837, 'Tu
                  'tumor_090': 17492, 'tumor_108': 86857, 'Normal_093': 5112, 'Normal_084': 1661, 'Normal_005': 2297,
                  'Tumor_024': 13441, 'Normal_004': 1209, 'Normal_060': 1024, 'Normal_029': 1428, 'tumor_085': 40589}
 
+heatmap_feature_names = ['region_count', 'ratio_tumor_tissue', 'largest_tumor_area', 'longest_axis_largest_tumor',
+                         'pixels_gt_90', 'avg_prediction', 'max_area', 'mean_area', 'area_variance', 'area_skew',
+                         'area_kurt', 'max_perimeter', 'mean_perimeter', 'perimeter_variance', 'perimeter_skew',
+                         'perimeter_kurt', 'max_eccentricity', 'mean_eccentricity', 'eccentricity_variance',
+                         'eccentricity_skew', 'eccentricity_kurt', 'max_extent', 'mean_extent', 'extent_variance',
+                         'extent_skew', 'extent_kurt', 'max_solidity', 'mean_solidity', 'solidity_variance',
+                         'solidity_skew', 'solidity_kurt', 'label']
+
 BATCH_SIZE = 32
 
 N_TRAIN_SAMPLES = 288000
@@ -185,6 +189,9 @@ PATCH_INDEX_POSITIVE = 700000
 TUMOR_PROB_THRESHOLD = 0.90
 PIXEL_WHITE = 255
 PIXEL_BLACK = 0
+
+HEATMAP_FEATURE_CSV_TRAIN = 'heatmap_features_train.csv'
+HEATMAP_FEATURE_CSV_VALIDATION = 'heatmap_features_validation.csv'
 
 
 def get_heatmap_ckpt_path(model_name):

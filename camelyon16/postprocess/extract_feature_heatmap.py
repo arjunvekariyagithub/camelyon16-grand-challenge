@@ -1,7 +1,8 @@
+import csv
 import glob
 import os
 import random
-import csv
+
 import cv2
 import numpy as np
 import scipy.stats.stats as st
@@ -124,6 +125,7 @@ def extract_features(heatmap_prob, image_open):
     :return:
 
     """
+
     heatmap_threshold_t90 = np.array(heatmap_prob)
     heatmap_threshold_t50 = np.array(heatmap_prob)
     heatmap_threshold_t90[heatmap_threshold_t90 < int(0.90 * 255)] = 0
@@ -211,8 +213,8 @@ def extract_features_all(heatmap_prob_name_postfix):
     random.seed(12345)
     random.shuffle(normal_shuffled_index)
 
-    tumor_shuffled_index = tumor_shuffled_index[:10]
-    normal_shuffled_index = normal_shuffled_index[:15]
+    tumor_shuffled_index = tumor_shuffled_index[:20]
+    normal_shuffled_index = normal_shuffled_index[:30]
 
     validation_index = tumor_shuffled_index + normal_shuffled_index
     print('number of validation samples: %d' % len(validation_index))
@@ -220,11 +222,13 @@ def extract_features_all(heatmap_prob_name_postfix):
     wsi_paths = tumor_wsi_paths + normal_wsi_paths
     print(len(wsi_paths))
 
-    features_file_train = open('heatmap_features_train.csv', 'w')
-    features_file_validation = open('heatmap_features_validation.csv', 'w')
+    features_file_train = open(utils.HEATMAP_FEATURE_CSV_TRAIN, 'w')
+    features_file_validation = open(utils.HEATMAP_FEATURE_CSV_VALIDATION, 'w')
 
     wr_train = csv.writer(features_file_train, quoting=csv.QUOTE_NONNUMERIC)
     wr_validation = csv.writer(features_file_validation, quoting=csv.QUOTE_NONNUMERIC)
+    wr_train.writerow(utils.heatmap_feature_names)
+    wr_validation.writerow(utils.heatmap_feature_names)
     index = 0
     for wsi_path in wsi_paths:
         wsi_name = utils.get_filename_from_path(wsi_path)
@@ -248,6 +252,7 @@ def extract_features_all(heatmap_prob_name_postfix):
             wr_train.writerow(features)
 
         index += 1
+
 
 # old_prob = cv2.imread('tumor_076_prob_old.png')
 # extract_features(np.array(old_prob))
