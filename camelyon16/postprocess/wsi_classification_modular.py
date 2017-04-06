@@ -6,7 +6,7 @@ from sklearn.metrics import roc_curve, auc
 
 from camelyon16 import utils as utils
 
-FEATURE_START_INDEX = 2
+FEATURE_START_INDEX = 0
 
 
 def export_tree(forest):
@@ -118,7 +118,7 @@ if __name__ == '__main__':
     # predict_y, prob_predict_y = validate(train_x, train_y, model, 'Train')
     # plot_roc(train_y, prob_predict_y, 'Train Second Model')
 
-    train_x, train_y, test_x, test_y = load_train_test_data(utils.HEATMAP_FEATURE_CSV_TRAIN_ALL,
+    train_x, train_y, test_x, test_y = load_train_test_data(utils.HEATMAP_FEATURE_CSV_TRAIN_ALL_SECOND_MODEL,
                                                             utils.HEATMAP_FEATURE_CSV_TEST)
     model = train(train_x, train_y)
     predict_y, prob_predict_y = validate(test_x, test_y, model, 'Test')
