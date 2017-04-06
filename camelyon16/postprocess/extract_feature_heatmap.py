@@ -199,7 +199,87 @@ def extract_features(heatmap_prob, image_open):
     return features
 
 
-def extract_features_all(heatmap_prob_name_postfix):
+def extract_features_test(heatmap_prob_name_postfix_first_model, heatmap_prob_name_postfix_second_model, f_test):
+    print('************************** extract_features_test() ***************************')
+    print('heatmap_prob_name_postfix_first_model: %s' % heatmap_prob_name_postfix_first_model)
+    print('heatmap_prob_name_postfix_second_model: %s' % heatmap_prob_name_postfix_second_model)
+    print('f_test: %s' % f_test)
+
+    test_wsi_paths = glob.glob(os.path.join(utils.TEST_WSI_PATH, '*.tif'))
+    test_wsi_paths.sort()
+    test_wsi_paths = test_wsi_paths[48:]
+
+    features_file_test = open(f_test, 'a')
+
+    wr_test = csv.writer(features_file_test, quoting=csv.QUOTE_NONNUMERIC)
+    wr_test.writerow(utils.heatmap_feature_names[:len(utils.heatmap_feature_names) - 1])
+    for wsi_path in test_wsi_paths:
+        wsi_name = utils.get_filename_from_path(wsi_path)
+        # print('extracting features for: %s' % wsi_name)
+        heatmap_prob_path = glob.glob(
+            os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix_first_model)))
+        # print(heatmap_prob_path)
+        image_open = wsi_ops.get_image_open(wsi_path)
+        heatmap_prob = cv2.imread(heatmap_prob_path[0])
+        # cv2.imshow('heatmap_prob', heatmap_prob)
+        features = extract_features(heatmap_prob, image_open)
+        print(features)
+        wr_test.writerow(features)
+
+
+def extract_features_train_all(heatmap_prob_name_postfix_first_model, heatmap_prob_name_postfix_second_model, f_train):
+    print('********************** extract_features_train_all() *************************')
+    print('heatmap_prob_name_postfix_first_model: %s' % heatmap_prob_name_postfix_first_model)
+    print('heatmap_prob_name_postfix_second_model: %s' % heatmap_prob_name_postfix_second_model)
+    print('f_train: %s' % f_train)
+
+    tumor_wsi_paths = glob.glob(os.path.join(utils.TUMOR_WSI_PATH, '*.tif'))
+    tumor_wsi_paths.sort()
+    normal_wsi_paths = glob.glob(os.path.join(utils.NORMAL_WSI_PATH, '*.tif'))
+    normal_wsi_paths.sort()
+
+    wsi_paths = tumor_wsi_paths + normal_wsi_paths
+
+    features_file_train_all = open(f_train, 'w')
+
+    wr_train = csv.writer(features_file_train_all, quoting=csv.QUOTE_NONNUMERIC)
+    wr_train.writerow(utils.heatmap_feature_names)
+    for wsi_path in wsi_paths:
+        wsi_name = utils.get_filename_from_path(wsi_path)
+        # print('extracting features for: %s' % wsi_name)
+        heatmap_prob_path = glob.glob(
+            os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix_first_model)))
+        # print(heatmap_prob_path)
+        image_open = wsi_ops.get_image_open(wsi_path)
+        heatmap_prob = cv2.imread(heatmap_prob_path[0])
+
+        if heatmap_prob_name_postfix_second_model is not None:
+            heatmap_prob_path_second_model = glob.glob(
+                os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix_second_model)))
+            heatmap_prob_second_model = cv2.imread(heatmap_prob_path_second_model[0])
+
+            for row in range(heatmap_prob.shape[0]):
+                for col in range(heatmap_prob.shape[1]):
+                    if heatmap_prob[row, col, 0] >= 0.90 * 255 and heatmap_prob_second_model[row, col, 0] < 0.50 * 255:
+                        heatmap_prob[row, col, :] = heatmap_prob_second_model[row, col, :]
+
+        features = extract_features(heatmap_prob, image_open)
+        if 'umor' in wsi_name:
+            features += [1]
+        else:
+            features += [0]
+        print(features)
+        wr_train.writerow(features)
+
+
+def extract_features_train_validation(heatmap_prob_name_postfix_first_model, heatmap_prob_name_postfix_second_model,
+                                      f_train, f_validation):
+    print('********************** extract_features_train_validation() ********************************')
+    print('heatmap_prob_name_postfix_first_model: %s' % heatmap_prob_name_postfix_first_model)
+    print('heatmap_prob_name_postfix_second_model: %s' % heatmap_prob_name_postfix_second_model)
+    print('f_train: %s' % f_train)
+    print('f_validation: %s' % f_validation)
+
     tumor_wsi_paths = glob.glob(os.path.join(utils.TUMOR_WSI_PATH, '*.tif'))
     tumor_wsi_paths.sort()
     normal_wsi_paths = glob.glob(os.path.join(utils.NORMAL_WSI_PATH, '*.tif'))
@@ -222,8 +302,8 @@ def extract_features_all(heatmap_prob_name_postfix):
     wsi_paths = tumor_wsi_paths + normal_wsi_paths
     print(len(wsi_paths))
 
-    features_file_train = open(utils.HEATMAP_FEATURE_CSV_TRAIN, 'w')
-    features_file_validation = open(utils.HEATMAP_FEATURE_CSV_VALIDATION, 'w')
+    features_file_train = open(f_train, 'w')
+    features_file_validation = open(f_validation, 'w')
 
     wr_train = csv.writer(features_file_train, quoting=csv.QUOTE_NONNUMERIC)
     wr_validation = csv.writer(features_file_validation, quoting=csv.QUOTE_NONNUMERIC)
@@ -234,11 +314,20 @@ def extract_features_all(heatmap_prob_name_postfix):
         wsi_name = utils.get_filename_from_path(wsi_path)
         # print('extracting features for: %s' % wsi_name)
         heatmap_prob_path = glob.glob(
-            os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix)))
+            os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix_first_model)))
         # print(heatmap_prob_path)
         image_open = wsi_ops.get_image_open(wsi_path)
         heatmap_prob = cv2.imread(heatmap_prob_path[0])
-        # cv2.imshow('heatmap_prob', heatmap_prob)
+
+        if heatmap_prob_name_postfix_second_model is not None:
+            heatmap_prob_path_second_model = glob.glob(
+                os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix_second_model)))
+            heatmap_prob_second_model = cv2.imread(heatmap_prob_path_second_model[0])
+            for row in range(heatmap_prob.shape[0]):
+                for col in range(heatmap_prob.shape[1]):
+                    if heatmap_prob[row, col, 0] >= 0.90 * 255 and heatmap_prob_second_model[row, col, 0] < 0.20 * 255:
+                        heatmap_prob[row, col, :] = heatmap_prob_second_model[row, col, :]
+
         features = extract_features(heatmap_prob, image_open)
         if 'umor' in wsi_name:
             features += [1]
@@ -254,51 +343,24 @@ def extract_features_all(heatmap_prob_name_postfix):
         index += 1
 
 
-# old_prob = cv2.imread('tumor_076_prob_old.png')
-# extract_features(np.array(old_prob))
-# # new_prob = cv2.imread('tumor_076_prob_new.png')
-# # old_new_prob = np.array(old_prob)
-# old_threshold = np.array(old_prob)
-#
-# # for row in range(old_prob.shape[0]):
-# #     for col in range(old_prob.shape[1]):
-# #         if old_prob[row, col, 0] >= 0.70*255 and new_prob[row, col, 0] < 0.t50*255:
-# #             old_new_prob[row, col, :] = new_prob[row, col, :]
-#
-#
-# # old_new_prob[new_prob < 0.20*255] = 0
-#
-# old_threshold[old_threshold < int(0.t90 * 255)] = 0
-# old_threshold[old_threshold >= int(0.t90 * 255)] = 255
-# # new_prob[new_prob >= 0.51*255] = 255
-# # old_prob[old_prob < 0.t90*255] = 0
-# # new_prob[new_prob < 0.51*255] = 0
-#
-# # cv2.imshow('old_prob', old_prob)
-# # cv2.imshow('old_new_prob', old_new_prob)
-#
-#
-# close_kernel = np.ones((FILTER_DIM, FILTER_DIM), dtype=np.uint8)
-# image_close = cv2.morphologyEx(np.array(old_threshold), cv2.MORPH_CLOSE, close_kernel)
-# open_kernel = np.ones((FILTER_DIM, FILTER_DIM), dtype=np.uint8)
-# image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
-# print(image_open.shape)
-#
-# # cv2.imshow('old_threshold', old_threshold)
-# # cv2.imshow('image_close', image_close)
-# cv2.imshow('image_open', image_open)
-# # cv2.imshow('new_prob', new_prob)
-# cv2.waitKey(0) & 0xFF
-
-
 def extract_features_first_heatmap():
-    extract_features_all(heatmap_prob_name_postfix='_prob.png')
+    # extract_features_train_validation('_prob.png', None, utils.HEATMAP_FEATURE_CSV_TRAIN,
+    #                                   utils.HEATMAP_FEATURE_CSV_VALIDATION)
+    # extract_features_train_all('_prob.png', None, utils.HEATMAP_FEATURE_CSV_TRAIN_ALL)
+    extract_features_test('_prob.png', None, utils.HEATMAP_FEATURE_CSV_TEST)
 
 
-def extract_features_second_heatmap():
-    extract_features_all(heatmap_prob_name_postfix='_prob_%s.png' % utils.SECOND_HEATMAP_MODEL)
+def extract_features_both_heatmap():
+    extract_features_train_validation('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
+                                      utils.HEATMAP_FEATURE_CSV_TRAIN_SECOND_MODEL,
+                                      utils.HEATMAP_FEATURE_CSV_VALIDATION_SECOND_MODEL)
+    # extract_features_train_all('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
+    #                            utils.HEATMAP_FEATURE_CSV_TRAIN_ALL_SECOND_MODEL)
+    # extract_features_test('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
+    #                       utils.HEATMAP_FEATURE_CSV_TEST_SECOND_MODEL)
 
 
 if __name__ == '__main__':
     wsi_ops = WSIOps()
     extract_features_first_heatmap()
+    # extract_features_both_heatmap()

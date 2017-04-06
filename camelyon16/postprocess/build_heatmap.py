@@ -26,7 +26,6 @@ import os.path
 import time
 from datetime import datetime
 import math
-import matplotlib.pyplot as plt
 
 from camelyon16.inception import image_processing
 from camelyon16.inception import inception_model as inception
@@ -35,6 +34,7 @@ import cv2
 import tensorflow as tf
 from camelyon16.inception.dataset import Dataset
 from camelyon16 import utils as utils
+import matplotlib.pyplot as plt
 
 DATA_SET_NAME = 'TF-Records'
 
@@ -79,7 +79,7 @@ def assign_prob(heatmap, probabilities, coordinates):
     return heatmap
 
 
-def generate_heatmap(saver, dataset, model_name, prob_ops, cords_op, heat_map):
+def generate_heatmap(saver, dataset, model_name, prob_ops, cords_op, heat_map, wsi_filename):
     # def _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op, logits, labels, dense_labels):
 
     with tf.Session() as sess:
@@ -129,8 +129,8 @@ def generate_heatmap(saver, dataset, model_name, prob_ops, cords_op, heat_map):
                 probabilities, coordinates = sess.run([prob_ops, cords_op])
                 heat_map = assign_prob(heat_map, probabilities, coordinates)
                 step += 1
-                print('%s: patch processed: %d / %d' % (datetime.now(), step * BATCH_SIZE,
-                                                        dataset.num_examples_per_epoch()))
+                print('[%s]%s: patch processed: %d / %d' % (wsi_filename, datetime.now(), step * BATCH_SIZE,
+                                                            dataset.num_examples_per_epoch()))
                 if not ((step * BATCH_SIZE) % 1000):
                     duration = time.time() - start_time
                     print('1000 patch process time: %d secs' % math.ceil(duration))
@@ -145,7 +145,7 @@ def generate_heatmap(saver, dataset, model_name, prob_ops, cords_op, heat_map):
     return heat_map
 
 
-def build_heatmap(dataset, heat_map, model_name):
+def build_heatmap(dataset, heat_map, model_name, wsi_filename):
     """Evaluate model on Dataset for a number of steps."""
     with tf.Graph().as_default():
         # Get images and labels from the dataset.
@@ -170,7 +170,7 @@ def build_heatmap(dataset, heat_map, model_name):
         summary_writer = tf.summary.FileWriter(FLAGS.eval_dir, graph_def=graph_def)
 
         # _eval_once(saver, summary_writer, accuracy, summary_op, confusion_matrix_op, logits, labels, dense_labels)
-        heat_map = generate_heatmap(saver, dataset, model_name, prob_ops, cords, heat_map)
+        heat_map = generate_heatmap(saver, dataset, model_name, prob_ops, cords, heat_map, wsi_filename)
 
         return heat_map
 
@@ -180,18 +180,17 @@ def generate_all_heatmap(model_name, heatmap_name_postfix, heatmap_prob_name_pos
     special case: Tumor_018
 
     Failded case: Tumor_20, Tumor_25,
-
-    Error: Tumor_068 (due to old patch name (col_row_level), new (row_col_level))
     """
     global heat_map_prob
     assert model_name in utils.heatmap_models, utils.heatmap_models
-
-    tf_records_file_names = sorted(os.listdir(utils.HEAT_MAP_TF_RECORDS_DIR))
+    # tf_records_file_names = sorted(os.listdir(utils.HEAT_MAP_TF_RECORDS_DIR))
     # tf_records_file_names = tf_records_file_names[1:]
-    print(tf_records_file_names)
-    for wsi_filename in tf_records_file_names:
-        # if wsi_filename != 'Tumor_020':
-        #     continue
+    # print(tf_records_file_names)
+    wsi_names = utils.test_wsi_names[70:]
+    print('Generating heatmap for:', wsi_names)
+    for wsi_filename in wsi_names:
+        if 'est' not in wsi_filename:
+            continue
 
         print('Generating heatmap for: %s' % wsi_filename)
         heatmap_filename = str(os.path.join(utils.HEAT_MAP_DIR, wsi_filename)) + heatmap_name_postfix
@@ -203,6 +202,7 @@ def generate_all_heatmap(model_name, heatmap_name_postfix, heatmap_prob_name_pos
         tf_records_dir = os.path.join(utils.HEAT_MAP_TF_RECORDS_DIR, wsi_filename)
         assert os.path.exists(tf_records_dir), 'tf-records directory %s does not exist' % tf_records_dir
         # raw_patches_dir = os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, wsi_filename)
+        # assert os.path.exists(raw_patches_dir), 'heatmap raw_patches_dir %s does not exist' % raw_patches_dir
         heatmap_rgb_path = os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_filename)
         assert os.path.exists(heatmap_rgb_path), 'heatmap rgb image %s does not exist' % heatmap_rgb_path
         heatmap_rgb = cv2.imread(heatmap_rgb_path)
@@ -213,14 +213,17 @@ def generate_all_heatmap(model_name, heatmap_name_postfix, heatmap_prob_name_pos
         # num_patches = len(os.listdir(raw_patches_dir))
         num_patches = utils.n_patches_dic[wsi_filename]
         dataset = Dataset(DATA_SET_NAME, utils.data_subset[4], tf_records_dir=tf_records_dir, num_patches=num_patches)
-        heat_map = build_heatmap(dataset, heat_map, model_name)
-        # plt.imshow(heat_map, cmap='jet', interpolation='nearest')
-        # plt.colorbar()
-        # plt.clim(0.00, 1.00)
-        # plt.axis([0, heatmap_rgb.shape[1], 0, heatmap_rgb.shape[0]])
-        # plt.savefig(heatmap_filename)
+        heat_map = build_heatmap(dataset, heat_map, model_name, wsi_filename)
+
+        if not utils.is_running_on_server():
+            plt.imshow(heat_map, cmap='jet', interpolation='nearest')
+            plt.colorbar()
+            plt.clim(0.00, 1.00)
+            plt.axis([0, heatmap_rgb.shape[1], 0, heatmap_rgb.shape[0]])
+            plt.savefig(heatmap_filename)
+            plt.clf()
+
         cv2.imwrite(os.path.join(utils.HEAT_MAP_DIR, wsi_filename) + heatmap_prob_name_postfix, heat_map_prob * 255)
-        # plt.clf()
 
 
 def build_first_heatmap():

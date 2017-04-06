@@ -7,6 +7,11 @@ print('user: %s' % user)
 
 assert user in users, 'User not Authorised!!'
 
+
+def is_running_on_server():
+    return user == 'arjun'
+
+
 data_subset = ['train', 'train-aug', 'validation', 'validation-aug', 'heatmap']
 
 DATA_DIR = '/home/millpc/Documents/Arjun/Study/Thesis/CAMELYON16/data/CAMELYON16/'
@@ -111,6 +116,24 @@ PREFIX_SHARD_AUG_TRAIN = 'train-aug'
 PREFIX_SHARD_VALIDATION = 'validation'
 PREFIX_SHARD_AUG_VALIDATION = 'validation-aug'
 
+test_wsi_names = ['Test_001', 'Test_002', 'Test_003', 'Test_004', 'Test_005', 'Test_006', 'Test_007', 'Test_008',
+                  'Test_009', 'Test_010', 'Test_011', 'Test_012', 'Test_013', 'Test_014', 'Test_015', 'Test_016',
+                  'Test_017', 'Test_018', 'Test_019', 'Test_020', 'Test_021', 'Test_022', 'Test_023', 'Test_024',
+                  'Test_025', 'Test_026', 'Test_027', 'Test_028', 'Test_029', 'Test_030', 'Test_031', 'Test_032',
+                  'Test_033', 'Test_034', 'Test_035', 'Test_036', 'Test_037', 'Test_038', 'Test_039', 'Test_040',
+                  'Test_041', 'Test_042', 'Test_043', 'Test_044', 'Test_045', 'Test_046', 'Test_047', 'Test_048',
+                  'Test_049', 'Test_050', 'Test_051', 'Test_052', 'Test_053', 'Test_054', 'Test_055', 'Test_056',
+                  'Test_057', 'Test_058', 'Test_059', 'Test_060', 'Test_061', 'Test_062', 'Test_063', 'Test_064',
+                  'Test_065', 'Test_066', 'Test_067', 'Test_068', 'Test_069', 'Test_070', 'Test_071', 'Test_072',
+                  'Test_073', 'Test_074', 'Test_075', 'Test_076', 'Test_077', 'Test_078', 'Test_079', 'Test_080',
+                  'Test_081', 'Test_082', 'Test_083', 'Test_084', 'Test_085', 'Test_086', 'Test_087', 'Test_088',
+                  'Test_089', 'Test_090', 'Test_091', 'Test_092', 'Test_093', 'Test_094', 'Test_095', 'Test_096',
+                  'Test_097', 'Test_098', 'Test_099', 'Test_100', 'Test_101', 'Test_102', 'Test_103', 'Test_104',
+                  'Test_105', 'Test_106', 'Test_107', 'Test_108', 'Test_109', 'Test_110', 'Test_111', 'Test_112',
+                  'Test_113', 'Test_114', 'Test_115', 'Test_116', 'Test_117', 'Test_118', 'Test_119', 'Test_120',
+                  'Test_121', 'Test_122', 'Test_123', 'Test_124', 'Test_125', 'Test_126', 'Test_127', 'Test_128',
+                  'Test_129', 'Test_130']
+
 n_patches_dic = {'Normal_085': 3640, 'Normal_094': 8016, 'Normal_077': 7837, 'Tumor_028': 13315, 'Normal_081': 7413,
                  'Normal_054': 1232, 'Tumor_014': 8767, 'tumor_086': 22118, 'Tumor_067': 4581, 'Normal_019': 166,
                  'Normal_040': 16255, 'tumor_096': 44417, 'Normal_069': 7859, 'Normal_013': 1636, 'Normal_133': 10456,
@@ -164,7 +187,33 @@ n_patches_dic = {'Normal_085': 3640, 'Normal_094': 8016, 'Normal_077': 7837, 'Tu
                  'Normal_045': 154, 'Normal_006': 694, 'tumor_078': 58033, 'Tumor_004': 11716, 'Normal_123': 38147,
                  'Normal_011': 10229, 'Tumor_021': 16224, 'Normal_105': 10548, 'Tumor_027': 12576, 'Normal_075': 8683,
                  'tumor_090': 17492, 'tumor_108': 86857, 'Normal_093': 5112, 'Normal_084': 1661, 'Normal_005': 2297,
-                 'Tumor_024': 13441, 'Normal_004': 1209, 'Normal_060': 1024, 'Normal_029': 1428, 'tumor_085': 40589}
+                 'Tumor_024': 13441, 'Normal_004': 1209, 'Normal_060': 1024, 'Normal_029': 1428, 'tumor_085': 40589,
+                 'Test_006': 11158, 'Test_032': 12246, 'Test_060': 3181, 'Test_028': 13624, 'Test_100': 20669,
+                 'Test_099': 58864, 'Test_051': 5983, 'Test_075': 9918, 'Test_084': 22604, 'Test_053': 17792,
+                 'Test_062': 5029, 'Test_096': 2252, 'Test_031': 59070, 'Test_008': 61463, 'Test_118': 3790,
+                 'Test_111': 8485, 'Test_114': 65086, 'Test_045': 4711, 'Test_107': 1690, 'Test_022': 60004,
+                 'Test_106': 4608, 'Test_064': 1965, 'Test_016': 82343, 'Test_039': 1504, 'Test_083': 2364,
+                 'Test_078': 60505, 'Test_035': 8859, 'Test_015': 3052, 'Test_130': 5635, 'Test_113': 81479,
+                 'Test_034': 10027, 'Test_013': 3431, 'Test_050': 11604, 'Test_094': 49443, 'Test_063': 59411,
+                 'Test_108': 6529, 'Test_066': 20188, 'Test_011': 11803, 'Test_072': 4451, 'Test_121': 4510,
+                 'Test_021': 16930, 'Test_126': 10102, 'Test_068': 15660, 'Test_042': 35203, 'Test_097': 14196,
+                 'Test_105': 107890, 'Test_029': 2859, 'Test_101': 16480, 'Test_074': 11568, 'Test_019': 30449,
+                 'Test_033': 39451, 'Test_012': 53978, 'Test_069': 44135, 'Test_030': 6901, 'Test_040': 4914,
+                 'Test_089': 10790, 'Test_079': 36463, 'Test_043': 3623, 'Test_054': 9608, 'Test_065': 12714,
+                 'Test_010': 16887, 'Test_091': 2683, 'Test_041': 59003, 'Test_109': 13054, 'Test_061': 8249,
+                 'Test_071': 19054, 'Test_052': 6537, 'Test_104': 13175, 'Test_092': 87630, 'Test_001': 48559,
+                 'Test_119': 2236, 'Test_005': 3565, 'Test_103': 5953, 'Test_059': 6892, 'Test_020': 1612,
+                 'Test_122': 31691, 'Test_124': 2362, 'Test_038': 6958, 'Test_125': 51569, 'Test_073': 10029,
+                 'Test_098': 51339, 'Test_004': 45887, 'Test_037': 102060, 'Test_110': 55723, 'Test_025': 1862,
+                 'Test_117': 8356, 'Test_056': 18028, 'Test_088': 4452, 'Test_082': 12560, 'Test_076': 13676,
+                 'Test_027': 5818, 'Test_023': 8119, 'Test_002': 8579, 'Test_095': 33768, 'Test_102': 9717,
+                 'Test_049': 14853, 'Test_044': 30987, 'Test_086': 44188, 'Test_026': 77775, 'Test_093': 4203,
+                 'Test_024': 5653, 'Test_057': 3703, 'Test_129': 2764, 'Test_123': 3508, 'Test_120': 17075,
+                 'Test_112': 3862, 'Test_018': 23417, 'Test_009': 6655, 'Test_070': 3913, 'Test_046': 16594,
+                 'Test_047': 33913, 'Test_003': 5076, 'Test_077': 62140, 'Test_058': 72536, 'Test_116': 36564,
+                 'Test_081': 5931, 'Test_085': 2633, 'Test_127': 27610, 'Test_036': 6250, 'Test_055': 21480,
+                 'Test_115': 1878, 'Test_090': 21989, 'Test_048': 72674, 'Test_080': 64701, 'Test_007': 4694,
+                 'Test_087': 5326, 'Test_128': 17838, 'Test_067': 13710, 'Test_014': 83605, 'Test_017': 6787}
 
 heatmap_feature_names = ['region_count', 'ratio_tumor_tissue', 'largest_tumor_area', 'longest_axis_largest_tumor',
                          'pixels_gt_90', 'avg_prediction', 'max_area', 'mean_area', 'area_variance', 'area_skew',
@@ -190,8 +239,16 @@ TUMOR_PROB_THRESHOLD = 0.90
 PIXEL_WHITE = 255
 PIXEL_BLACK = 0
 
-HEATMAP_FEATURE_CSV_TRAIN = 'heatmap_features_train.csv'
-HEATMAP_FEATURE_CSV_VALIDATION = 'heatmap_features_validation.csv'
+HEATMAP_FEATURE_CSV_TRAIN = 'features/heatmap_features_train.csv'
+HEATMAP_FEATURE_CSV_VALIDATION = 'features/heatmap_features_validation.csv'
+HEATMAP_FEATURE_CSV_TRAIN_ALL = 'features/heatmap_features_train_all.csv'
+HEATMAP_FEATURE_CSV_TEST = 'features/heatmap_features_test.csv'
+HEATMAP_FEATURE_CSV_TRAIN_SECOND_MODEL = 'features/heatmap_features_train_model8.csv'
+HEATMAP_FEATURE_CSV_VALIDATION_SECOND_MODEL = 'features/heatmap_features_validation_model8.csv'
+HEATMAP_FEATURE_CSV_TRAIN_ALL_SECOND_MODEL = 'features/heatmap_features_train_all_model8.csv'
+HEATMAP_FEATURE_CSV_TEST_SECOND_MODEL = 'features/heatmap_features_test_model8.csv'
+
+TEST_CSV_GT = 'GT.csv'
 
 
 def get_heatmap_ckpt_path(model_name):

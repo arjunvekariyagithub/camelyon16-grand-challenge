@@ -1,3 +1,19 @@
+
+Processes running:
+
+ON-PC:
+1) Building Test tf-records ('Test_037' in process)
+2) Building Test heatmaps for model5
+
+ON-SERVER:
+1) Building Tumor heatmaps for model8 ('tumor_085' in process)
+
+TODO:
+1) Verify train data accuracy by eliminating heatmap false positives using model8
+2) Building Test heatmaps for model8 if 1) shows good impact over train classification accuracy
+3) Derive final Test accuracy
+
+**************************************************************************************************************
 Heatmap feature extraction:
 
 Weather to extract features corresponds to only largest tumor region or from all regions?
@@ -18,6 +34,9 @@ Does 'eccentricity' helps distinguish +ve from -ve?
 **************************************************************************************************************
 Heatmap Analysis:
 
+Test slides with false classification:
+Test_010,
+
 Tumor slides with many False Positives:
 Tumor_105, Tumor_015, Tumor_020, Tumor_025, Tumor_029, Tumor_033, Tumor_034, Tumor_043, Tumor_055, Tumor_056,
 Tumor_061
@@ -36,7 +55,7 @@ Normal special case (big tumor region):
 Normal_144,
 
 **************************************************************************************************************
-TO DO:
+TODO:
 Apply threshold(0.90) to old (model5) heatmaps and check at what extent it eliminates false positives
 (false positives might have prob < 0.90)
 

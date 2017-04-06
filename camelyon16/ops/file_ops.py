@@ -10,14 +10,14 @@ import camelyon16.utils as utils
 
 def copy_all(from_dir, to_dir, file_names, name_pattern):
     if name_pattern is not None:
-        print('moving files with pattern: %s' % name_pattern)
+        print('copying files with pattern: %s' % name_pattern)
         file_paths = glob.glob(os.path.join(from_dir, name_pattern))
         total_file_count = len(file_paths)
         print('Files found: %d' % total_file_count)
         for index in range(total_file_count):
             copyfile(file_paths[index], to_dir + utils.get_filename_from_path(file_paths[index]))
             if not index % 1000:
-                print('moved %d of %d files.' % (index, total_file_count))
+                print('copied %d of %d files.' % (index, total_file_count))
                 sys.stdout.flush()
     else:
         total_file_count = len(file_names)
@@ -174,6 +174,19 @@ def delete_files(from_dir, name_pattern=None, n_sample=None):
                     sys.stdout.flush()
 
 
+def rename(from_dir, name_pattern, term_to_replace, replace_with, n_samples=None):
+    from_file_paths = glob.glob(
+        os.path.join(from_dir, '%s' % name_pattern))
+    from_file_paths.sort()
+
+    if n_samples is not None:
+        from_file_paths = from_file_paths[:n_samples]
+
+    for from_file_path in from_file_paths:
+        to_file_path = from_file_path.replace(term_to_replace, replace_with)
+        os.rename(from_file_path, to_file_path)
+
+
 def search(search_dir, name_pattern='*'):
     file_paths = glob.glob(os.path.join(search_dir, name_pattern))
     print("Found %d files with pattern '%s' into '%s'." % (len(file_paths), name_pattern, search_dir))
@@ -193,10 +206,6 @@ def perform_ops():
     # move_files(utils.PATCHES_TRAIN_POSITIVE_PATH, utils.PATCHES_VALIDATION_POSITIVE_PATH,
     #            name_pattern='aug_false_tumor*', n_sample=46)
     # delete_files(utils.PATCHES_VALIDATION_NEGATIVE_PATH, 'normal_*', 476)
-    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'normal_*')
-    # search(utils.PATCHES_VALIDATION_POSITIVE_PATH, 'tumor_*')
-    # search(utils.PATCHES_VALIDATION_NEGATIVE_PATH, 'aug_normal_*')
-    # search(utils.PATCHES_VALIDATION_NEGATIVE_PATH, 'normal_*')
     # move_files(utils.PATCHES_TRAIN_POSITIVE_PATH, utils.PATCHES_VALIDATION_POSITIVE_PATH,
     #            n_sample=5000)
     # move_files(utils.PATCHES_TRAIN_NEGATIVE_PATH, utils.PATCHES_VALIDATION_NEGATIVE_PATH,
@@ -205,22 +214,21 @@ def perform_ops():
     #            name_pattern='aug_normal_*', n_sample=1500)
     # move_files(utils.PATCHES_TRAIN_NEGATIVE_PATH, utils.PATCHES_VALIDATION_NEGATIVE_PATH,
     #            name_pattern='aug_false_normal*', n_sample=750)
-    # delete_files(utils.PATCHES_VALIDATION_NEGATIVE_PATH)
-    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH)
-    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'aug_false_normal*')
-    # search(utils.PATCHES_TRAIN_NEGATIVE_PATH, 'normal_*')
+    #
+    # rename(utils.HEAT_MAP_DIR, 'Test*prob.png', 'prob', 'heatmap', n_samples=79)
+    # search(utils.HEAT_MAP_DIR, '*umor*prob.png')
+    # search(utils.HEAT_MAP_DIR, '*umor*prob_model8.png')
+    # search(utils.HEAT_MAP_DIR, 'Normal*prob.png')
+    # search(utils.HEAT_MAP_DIR, 'Normal*prob_model8.png')
 
     file_paths = glob.glob(os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, '*'))
     file_paths.sort()
-    total_patches = 0
     n_patches_dic = {}
     for file_path in file_paths:
-        n_patches_dic[utils.get_filename_from_path(file_path)] = search(file_path)
+        if 'Test' in file_path:
+            n_patches_dic[utils.get_filename_from_path(file_path)] = search(file_path)
 
     print(n_patches_dic)
-    #
-    # search(utils.PATCHES_TRAIN_POSITIVE_PATH, 'tumor_*')
-    # search(utils.PATCHES_VALIDATION_POSITIVE_PATH, 'tumor_*')
 
 
 if __name__ == '__main__':

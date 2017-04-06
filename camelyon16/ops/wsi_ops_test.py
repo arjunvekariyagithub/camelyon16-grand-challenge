@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from openslide import OpenSlide, OpenSlideUnsupportedFormatError
+from PIL import Image
 
 import camelyon16.utils as utils
 
@@ -244,6 +245,7 @@ class WSIOps(object):
 
         # rgb_bbox = self.draw_bbox(rgb_image, bounding_boxes)
         # rgb_bbox_split = self.split_bbox(rgb_image, bounding_boxes, image_open)
+
 
         # Image.fromarray(rgb_image).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name), 'PNG')
         # Image.fromarray(rgb_contour).save(os.path.join(utils.HEAT_MAP_WSIs_PATH, wsi_image_name + '_contour'), 'PNG')
