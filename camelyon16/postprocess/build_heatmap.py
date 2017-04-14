@@ -186,7 +186,7 @@ def generate_all_heatmap(model_name, heatmap_name_postfix, heatmap_prob_name_pos
     # tf_records_file_names = sorted(os.listdir(utils.HEAT_MAP_TF_RECORDS_DIR))
     # tf_records_file_names = tf_records_file_names[1:]
     # print(tf_records_file_names)
-    wsi_names = utils.test_wsi_names[70:]
+    wsi_names = utils.test_wsi_names[45:48]
     print('Generating heatmap for:', wsi_names)
     for wsi_filename in wsi_names:
         if 'est' not in wsi_filename:
@@ -239,5 +239,5 @@ def build_second_heatmap():
 
 if __name__ == '__main__':
     heat_map_prob = None
-    # build_first_heatmap()
-    build_second_heatmap()
+    build_first_heatmap()
+    # build_second_heatmap()

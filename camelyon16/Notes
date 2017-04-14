@@ -1,17 +1,9 @@
 
-Processes running:
-
-ON-PC:
-1) Building Test tf-records ('Test_037' in process)
-2) Building Test heatmaps for model5
-
-ON-SERVER:
-1) Building Tumor heatmaps for model8 ('tumor_085' in process)
-
-TODO:
-1) Verify train data accuracy by eliminating heatmap false positives using model8
-2) Building Test heatmaps for model8 if 1) shows good impact over train classification accuracy
-3) Derive final Test accuracy
+Test confusion matrix (SVM):
+Predicted   0   1
+Actual
+0          73   7
+1           9  41
 
 **************************************************************************************************************
 Heatmap feature extraction:

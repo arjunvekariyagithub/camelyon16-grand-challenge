@@ -207,21 +207,30 @@ def extract_features_test(heatmap_prob_name_postfix_first_model, heatmap_prob_na
 
     test_wsi_paths = glob.glob(os.path.join(utils.TEST_WSI_PATH, '*.tif'))
     test_wsi_paths.sort()
-    test_wsi_paths = test_wsi_paths[48:]
 
-    features_file_test = open(f_test, 'a')
+    features_file_test = open(f_test, 'w')
 
     wr_test = csv.writer(features_file_test, quoting=csv.QUOTE_NONNUMERIC)
     wr_test.writerow(utils.heatmap_feature_names[:len(utils.heatmap_feature_names) - 1])
     for wsi_path in test_wsi_paths:
         wsi_name = utils.get_filename_from_path(wsi_path)
-        # print('extracting features for: %s' % wsi_name)
+        print('extracting features for: %s' % wsi_name)
         heatmap_prob_path = glob.glob(
             os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix_first_model)))
         # print(heatmap_prob_path)
         image_open = wsi_ops.get_image_open(wsi_path)
         heatmap_prob = cv2.imread(heatmap_prob_path[0])
-        # cv2.imshow('heatmap_prob', heatmap_prob)
+
+        if heatmap_prob_name_postfix_second_model is not None:
+            heatmap_prob_path_second_model = glob.glob(
+                os.path.join(utils.HEAT_MAP_DIR, '*%s*%s' % (wsi_name, heatmap_prob_name_postfix_second_model)))
+            heatmap_prob_second_model = cv2.imread(heatmap_prob_path_second_model[0])
+
+            for row in range(heatmap_prob.shape[0]):
+                for col in range(heatmap_prob.shape[1]):
+                    if heatmap_prob[row, col, 0] >= 0.90 * 255 and heatmap_prob_second_model[row, col, 0] < 0.50 * 255:
+                        heatmap_prob[row, col, :] = heatmap_prob_second_model[row, col, :]
+
         features = extract_features(heatmap_prob, image_open)
         print(features)
         wr_test.writerow(features)
@@ -351,16 +360,16 @@ def extract_features_first_heatmap():
 
 
 def extract_features_both_heatmap():
-    extract_features_train_validation('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
-                                      utils.HEATMAP_FEATURE_CSV_TRAIN_SECOND_MODEL,
-                                      utils.HEATMAP_FEATURE_CSV_VALIDATION_SECOND_MODEL)
+    # extract_features_train_validation('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
+    #                                   utils.HEATMAP_FEATURE_CSV_TRAIN_SECOND_MODEL,
+    #                                   utils.HEATMAP_FEATURE_CSV_VALIDATION_SECOND_MODEL)
     # extract_features_train_all('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
     #                            utils.HEATMAP_FEATURE_CSV_TRAIN_ALL_SECOND_MODEL)
-    # extract_features_test('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
-    #                       utils.HEATMAP_FEATURE_CSV_TEST_SECOND_MODEL)
+    extract_features_test('_prob.png', '_prob_%s.png' % utils.SECOND_HEATMAP_MODEL,
+                          utils.HEATMAP_FEATURE_CSV_TEST_SECOND_MODEL)
 
 
 if __name__ == '__main__':
     wsi_ops = WSIOps()
-    extract_features_first_heatmap()
-    # extract_features_both_heatmap()
+    # extract_features_first_heatmap()
+    extract_features_both_heatmap()

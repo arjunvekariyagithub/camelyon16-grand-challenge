@@ -29,6 +29,7 @@ class WSI(object):
             # ======================================================================================
         """
         try:
+            self.wsi_path = wsi_path
             self.wsi_image = OpenSlide(wsi_path)
 
             level = min(self.def_level, self.wsi_image.level_count - 1)
@@ -53,21 +54,22 @@ class WSI(object):
             # ======================================================================================
         """
         try:
+            self.wsi_path = wsi_path
             self.wsi_image = OpenSlide(wsi_path)
             self.mask_image = OpenSlide(mask_path)
 
-            level = min(self.def_level, self.wsi_image.level_count - 1, self.mask_image.level_count - 1)
-            # print('level used: %d' % level)
-            print(self.wsi_image.level_count)
-            print(self.wsi_image.level_dimensions)
+            level_used = self.wsi_image.level_count - 1
 
-            self.rgb_image_pil = self.wsi_image.read_region((0, 0), level,
-                                                            self.wsi_image.level_dimensions[level])
+            self.rgb_image_pil = self.wsi_image.read_region((0, 0), level_used,
+                                                            self.wsi_image.level_dimensions[level_used])
             self.rgb_image = np.array(self.rgb_image_pil)
 
-            self.rgb_mask_pil = self.mask_image.read_region((0, 0), level,
-                                                            self.mask_image.level_dimensions[level])
-            self.mask = np.array(self.rgb_mask_pil)
+            mask_level = self.mask_image.level_count - 1
+            self.rgb_mask_pil = self.mask_image.read_region((0, 0), mask_level,
+                                                            self.mask_image.level_dimensions[mask_level])
+
+            resize_factor = float(1.0 / pow(2, level_used - mask_level))
+            self.mask = cv2.resize(np.array(self.rgb_mask_pil), (0, 0), fx=resize_factor, fy=resize_factor)
             # self.rgb_image = cv2.resize(self.rgb_image, (0, 0), fx=0.50, fy=0.50)
         except OpenSlideUnsupportedFormatError:
             print('Exception: OpenSlideUnsupportedFormatError')
@@ -105,7 +107,7 @@ class WSI(object):
     def find_roi_tumor(self):
         # self.mask = cv2.cvtColor(self.mask, cv2.CV_32SC1)
         hsv = cv2.cvtColor(self.rgb_image, cv2.COLOR_BGR2HSV)
-        lower_red = np.array([50, 50, 50])
+        lower_red = np.array([20, 20, 20])
         upper_red = np.array([200, 200, 200])
         mask = cv2.inRange(hsv, lower_red, upper_red)
         res = cv2.bitwise_and(self.rgb_image, self.rgb_image, mask=mask)
@@ -116,7 +118,7 @@ class WSI(object):
         image_close = Image.fromarray(cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel))
         image_close_tmp = Image.fromarray(cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel_tmp))
         # (30, 30)
-        open_kernel = np.ones((30, 30), dtype=np.uint8)
+        open_kernel = np.ones((5, 5), dtype=np.uint8)
         open_kernel_tmp = np.ones((30, 30), dtype=np.uint8)
         image_open = Image.fromarray(cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel))
         image_open_tmp = Image.fromarray(cv2.morphologyEx(np.array(image_close_tmp), cv2.MORPH_OPEN, open_kernel_tmp))
@@ -124,12 +126,26 @@ class WSI(object):
             np.array(image_open), self.rgb_image,
             self.mask, np.array(image_open_tmp))
 
-        # self.draw_bbox(bounding_boxes)
-        #
-        # mask = cv2.resize(mask, (0, 0), fx=0.60, fy=0.60)
-        # cv2.imshow('mask', mask)
+        wsi_name = utils.get_filename_from_path(self.wsi_path)
+        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_hsv_mask.png', mask)
+        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_mask.png', self.mask)
+        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_image_close.png', np.array(image_close))
+        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_image_open.png', np.array(image_open))
 
-        self.display(contour_rgb, contour_rgb_tmp, contour_mask)
+        rgb_bbox = self.rgb_image.copy()
+        for i, bounding_box in enumerate(bounding_boxes):
+            x = int(bounding_box[0])
+            y = int(bounding_box[1])
+            cv2.rectangle(rgb_bbox, (x, y), (x + bounding_box[2], y + bounding_box[3]), color=(0, 0, 255),
+                          thickness=2)
+
+        cv2.imshow('contour_rgb', contour_rgb)
+        cv2.imshow('contour_bbox', rgb_bbox)
+        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + 'contour.png', contour_rgb)
+        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_bbox.png', rgb_bbox)
+        cv2.waitKey(0)
+
+        # self.display(contour_rgb, contour_rgb_tmp, contour_mask)
 
     def get_normal_image_contours(self, cont_img, rgb_image, cont_img_tmp):
         _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -228,29 +244,29 @@ def run_on_tumor_data():
     # check - 15, 31, 34, 44, 47, 54, 57, 64, 75, 76,
 
     wsi.index = 109
-    # image_mask_pair = zip(ops.wsi_paths, ops.mask_paths)
-    # image_mask_pair = list(image_mask_pair)
-    # for image_name, mask_name in image_mask_pair:
-    #     ops.read_tumor_wsi(image_name, mask_name)
+    wsi_path = wsi.wsi_paths[wsi.index]
+    mask_path = wsi.mask_paths[wsi.index]
+    if wsi.read_tumor_wsi(wsi_path, mask_path):
+        wsi.find_roi_tumor()
 
-    while True:
-        wsi_path = wsi.wsi_paths[wsi.index]
-        mask_path = wsi.mask_paths[wsi.index]
-        print(wsi_path)
-        print(mask_path)
-        if wsi.read_tumor_wsi(wsi_path, mask_path):
-            wsi.find_roi_tumor()
-            if not wsi.wait():
-                break
-        else:
-            if wsi.key == 81:
-                wsi.index -= 1
-                if wsi.index < 0:
-                    wsi.index = len(wsi.wsi_paths) - 1
-            elif wsi.key == 83:
-                wsi.index += 1
-                if wsi.index >= len(wsi.wsi_paths):
-                    wsi.index = 0
+    # while True:
+    #     wsi_path = wsi.wsi_paths[wsi.index]
+    #     mask_path = wsi.mask_paths[wsi.index]
+    #     print(wsi_path)
+    #     print(mask_path)
+    #     if wsi.read_tumor_wsi(wsi_path, mask_path):
+    #         wsi.find_roi_tumor()
+    #         if not wsi.wait():
+    #             break
+    #     else:
+    #         if wsi.key == 81:
+    #             wsi.index -= 1
+    #             if wsi.index < 0:
+    #                 wsi.index = len(wsi.wsi_paths) - 1
+    #         elif wsi.key == 83:
+    #             wsi.index += 1
+    #             if wsi.index >= len(wsi.wsi_paths):
+    #                 wsi.index = 0
 
 
 def run_on_normal_data():
