@@ -219,16 +219,40 @@ def perform_ops():
     # search(utils.HEAT_MAP_DIR, '*umor*prob.png')
     # search(utils.HEAT_MAP_DIR, '*umor*prob_model8.png')
     # search(utils.HEAT_MAP_DIR, 'Normal*prob.png')
-    # search(utils.HEAT_MAP_DIR, 'Normal*prob_model8.png')
+    # search(utils.HEAT_MAP_DIR, 'Normal*model8.png')
+    # search(utils.HEAT_MAP_DIR, '*umor*model8.png')
+    # search(utils.HEAT_MAP_DIR, '*Test*model8.png')
+    # search(utils.HEAT_MAP_DIR, 'Normal*.png')
+    # search(utils.HEAT_MAP_DIR, '*umor*.png')
+    # search(utils.HEAT_MAP_DIR, '*Test*.png')
 
-    file_paths = glob.glob(os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, '*'))
-    file_paths.sort()
-    n_patches_dic = {}
-    for file_path in file_paths:
-        if 'Test' in file_path:
-            n_patches_dic[utils.get_filename_from_path(file_path)] = search(file_path)
+    # file_paths = glob.glob(os.path.join(utils.HEAT_MAP_RAW_PATCHES_DIR, '*'))
+    # file_paths.sort()
+    # n_patches_dic = {}
+    # for file_path in file_paths:
+    #     if 'Test' in file_path:
+    #         n_patches_dic[utils.get_filename_from_path(file_path)] = search(file_path)
+    #
+    # print(n_patches_dic)
+    n_patches = 0
+    tumor_patches = 0
+    normal_pathces = 0
+    test_patches = 0
+    for k, v in enumerate(utils.n_patches_dic):
+        n_patches += utils.n_patches_dic[v]
+        if 'Test' in v:
+            test_patches += utils.n_patches_dic[v]
+        elif 'Normal' in v:
+            normal_pathces += utils.n_patches_dic[v]
+        else:
+            tumor_patches += utils.n_patches_dic[v]
 
-    print(n_patches_dic)
+    assert n_patches == (tumor_patches + normal_pathces + test_patches)
+
+    print('Tumor patches: %d' % tumor_patches)
+    print('Normal patches: %d' % normal_pathces)
+    print('Test patches: %d' % test_patches)
+    print('Total patches: %d' % n_patches)
 
 
 if __name__ == '__main__':

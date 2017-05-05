@@ -127,22 +127,24 @@ class WSI(object):
             self.mask, np.array(image_open_tmp))
 
         wsi_name = utils.get_filename_from_path(self.wsi_path)
-        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_hsv_mask.png', mask)
-        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_mask.png', self.mask)
-        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_image_close.png', np.array(image_close))
-        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_image_open.png', np.array(image_open))
+        # cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_hsv_mask.png', mask)
+        # cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_mask.png', self.mask)
+        # cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_image_close.png', np.array(image_close))
+        # cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_image_open.png', np.array(image_open))
 
-        rgb_bbox = self.rgb_image.copy()
-        for i, bounding_box in enumerate(bounding_boxes):
-            x = int(bounding_box[0])
-            y = int(bounding_box[1])
-            cv2.rectangle(rgb_bbox, (x, y), (x + bounding_box[2], y + bounding_box[3]), color=(0, 0, 255),
-                          thickness=2)
+        # rgb_bbox = self.rgb_image.copy()
+        # for i, bounding_box in enumerate(bounding_boxes):
+        #     x = int(bounding_box[0])
+        #     y = int(bounding_box[1])
+        #     cv2.rectangle(rgb_bbox, (x, y), (x + bounding_box[2], y + bounding_box[3]), color=(0, 0, 255),
+        #                   thickness=2)
 
-        cv2.imshow('contour_rgb', contour_rgb)
-        cv2.imshow('contour_bbox', rgb_bbox)
-        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + 'contour.png', contour_rgb)
-        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_bbox.png', rgb_bbox)
+        # cv2.imshow('contour_rgb', contour_rgb)
+        # cv2.imshow('contour_bbox', rgb_bbox)
+        # cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + 'contour.png', contour_rgb)
+        # cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_bbox.png', rgb_bbox)
+        cv2.imwrite(os.path.join(utils.THESIS_FIGURE_DIR, wsi_name) + '_hsv.png', hsv)
+        cv2.imshow('hsv', hsv)
         cv2.waitKey(0)
 
         # self.display(contour_rgb, contour_rgb_tmp, contour_mask)

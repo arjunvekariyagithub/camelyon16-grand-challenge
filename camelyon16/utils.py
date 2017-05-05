@@ -243,6 +243,8 @@ n_patches_dic = {'Normal_085': 3640, 'Normal_094': 8016, 'Normal_077': 7837, 'Tu
                  'Test_115': 1878, 'Test_090': 21989, 'Test_048': 72674, 'Test_080': 64701, 'Test_007': 4694,
                  'Test_087': 5326, 'Test_128': 17838, 'Test_067': 13710, 'Test_014': 83605, 'Test_017': 6787}
 
+print(list(n_patches_dic.keys()))
+
 heatmap_feature_names = ['region_count', 'ratio_tumor_tissue', 'largest_tumor_area', 'longest_axis_largest_tumor',
                          'pixels_gt_90', 'avg_prediction', 'max_area', 'mean_area', 'area_variance', 'area_skew',
                          'area_kurt', 'max_perimeter', 'mean_perimeter', 'perimeter_variance', 'perimeter_skew',

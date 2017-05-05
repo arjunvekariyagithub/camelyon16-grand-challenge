@@ -16,7 +16,7 @@ Feature list:
 -> average prediction across tumor region (Done)
 -> total number of tumor regions (Done)
 -> total number pixels with probability greater than 0.90 (Done)
--> including the percentage of tumor region over the whole tissue region (Done)
+-> ration, tumor region over the whole tissue region (Done)
 
 
 Doubts:
