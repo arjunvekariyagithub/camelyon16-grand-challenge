@@ -16,25 +16,25 @@ This repository contains the source code for deep learning based cancer detectio
 ## Modules
   - [inception](camelyon16/inception)
     - contains implementation of inception-v3 deep network.
-      - defining inception-v3 architecture
-      - training inception-v3
-      - evaluating inception-v3
-      - implementation of TF-Slim
+      - defining inception-v3 architecture ([inception_model.py](camelyon16/inception/slim/inception_model.py))
+      - training inception-v3 ([inception_train.py](camelyon16/inception/inception_train.py))
+      - evaluating inception-v3 ([inception_eval.py](camelyon16/inception/inception_eval.py))
+      - implementation of TF-Slim ([slim](camelyon16/inception/slim))
   - [ops](camelyon16/ops)
     - contains sub-modules for performing common operations 
-      - reading WSIs
-      - extracting patches from WSIs
-      - file ops (copy, move, delete patches)
+      - reading WSIs ([wsi_ops.py](camelyon16/ops/wsi_ops.py))
+      - extracting patches from WSIs ([wsi_ops.py](camelyon16/ops/wsi_ops.py))
+      - file ops (copy, move, delete patches) ([file_ops.py](camelyon16/ops/file_ops.py))
   - [preprocess](camelyon16/preprocess)
     - contains sub-modules for data pre-processing
-      - find Region of Interest (ROI) for WSIs
-      - extract training patches from WSIs
-      - build TF-Records for training patches
+      - find Region of Interest (ROI) for WSIs ([wsi_ops.py](camelyon16/ops/wsi_ops.py))
+      - extract training patches from WSIs ([extract_patches.py](camelyon16/preprocess/extract_patches.py))
+      - build TF-Records for training patches ([build_tf_records.py](camelyon16/preprocess/build_tf_records.py))
   - [postprocess](camelyon16/postprocess)
     - contains sub-modules related to post-processing
-      - extract patches for heatmaps
-      - building TF-Records for heatmap patches
-      - building heatmaps
-      - extract features from heatmaps
-      - feature classifiers (SVM, Random Forest)
+      - extract patches for heatmaps ([extract_patches_heatmap.py](camelyon16/postprocess/extract_patches_heatmap.py))
+      - building TF-Records for heatmaps ([build_tf_records_heatmap.py](camelyon16/postprocess/build_tf_records_heatmap.py))
+      - building heatmaps ([build_heatmap.py](camelyon16/postprocess/build_heatmap.py))
+      - extract features from heatmaps ([extract_feature_heatmap.py](camelyon16/postprocess/extract_feature_heatmap.py))
+      - feature classifiers (SVM, Random Forest) ([wsi_classification_modular.py](camelyon16/postprocess/wsi_classification_modular.py))
 
