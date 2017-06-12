@@ -1,3 +1,38 @@
-# Camelyon'16
+# Implementation of [Camelyon'16](https://camelyon16.grand-challenge.org/) grand challenge
 
-Camelyon'16 challenge for detecting breast cancer from Histopathological Whole Slide Images.
+This repository contains the source code for deep learning based classification system, developed to detect metastatic breast cancer from digital Whole Slide Images (WSI). Using dataset of the Camelyon’16 grand challenge, developed system obtained an area under the receiver operating curve (ROC) of 92.57%, which is superior than results obtained by [the winning method of Camelyon’16 grand challenge](https://camelyon16.grand-challenge.org/results/), developed by Harvard & MIT research laboratories. 
+
+## Requirements
+  - [python 3.5.x or above](https://www.python.org/downloads/)
+  - [Tensorflow 0.12.1 or above (GPU version)](https://github.com/tensorflow/tensorflow)
+  - [OpenSlide](http://openslide.org/download/)
+  - [sk-learn](http://scikit-learn.org/stable/)
+  - [sk-image](http://scikit-image.org/docs/dev/api/skimage.html)
+  - [open-cv v3.0](http://docs.opencv.org/3.1.0/d5/de5/tutorial_py_setup_in_windows.html)
+  - [numPy](https://github.com/numpy/numpy), [sciPy](https://github.com/scipy/scipy)
+
+## Modules
+  - [inception](camelyon16/inception)
+    - contains implementation of Inception-V3 deep network.
+      - defining Inception-V3 architecture
+      - training Inception-V3
+      - evaluating Inception-V3
+      - implementation of TF-Slim
+  - [ops](camelyon16/ops)
+    - contains sub-modules for performing common operations 
+      - reading WSI
+      - extracting patches from WSIs
+      - file ops (copy, move, delete patches)
+  - [preprocess](camelyon16/preprocess)
+    - contains sub-modules for data pre-processing
+      - extract training patches from WSIs
+      - build TF-Records for training patches
+      - find Region of Interest (ROI) for WSIs
+  - [postprocess](camelyon16/postprocess)
+    - contains sub-modules related to post-processing
+      - extract patches for heatmaps
+      - building heatmaps
+      - building TF-Records for heatmap patches
+      - extract features from heatmap
+      - feature classifiers (SVM, Random Forest)
+
