@@ -1,6 +1,8 @@
 # Implementation of [Camelyon'16](https://camelyon16.grand-challenge.org/) grand challenge
 
-This repository contains the source code for deep learning based cancer detection system, developed to identify metastatic breast cancer from digital Whole Slide Images (WSI). Using dataset of the Camelyon’16 grand challenge, developed system obtained an area under the receiver operating curve (ROC) of 92.57%, which is superior than results obtained by [the winning method of Camelyon’16 grand challenge](https://camelyon16.grand-challenge.org/results/), developed by Harvard & MIT research laboratories. 
+This repository contains the source code for deep learning based cancer detection system, developed to identify metastatic breast cancer from digital Whole Slide Images (WSI). Using dataset of the Camelyon’16 grand challenge, developed system obtained an area under the receiver operating curve (ROC) of 92.57%, which is superior than results obtained by [the winning method of Camelyon’16 grand challenge](https://camelyon16.grand-challenge.org/results/), developed by Harvard & MIT research laboratories.
+
+#### See [presentation](presentation.pdf) and [report](report.pdf) for detailed information about developed system, various implementations and environmental setup.
 
 ## Requirements
   - [python 3.5.x or above](https://www.python.org/downloads/)
