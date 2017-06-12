@@ -13,26 +13,26 @@ This repository contains the source code for deep learning based classification 
 
 ## Modules
   - [inception](camelyon16/inception)
-    - contains implementation of Inception-V3 deep network.
-      - defining Inception-V3 architecture
-      - training Inception-V3
-      - evaluating Inception-V3
+    - contains implementation of inception-v3 deep network.
+      - defining inception-v3 architecture
+      - training inception-v3
+      - evaluating inception-v3
       - implementation of TF-Slim
   - [ops](camelyon16/ops)
     - contains sub-modules for performing common operations 
-      - reading WSI
+      - reading WSIs
       - extracting patches from WSIs
       - file ops (copy, move, delete patches)
   - [preprocess](camelyon16/preprocess)
     - contains sub-modules for data pre-processing
+      - find Region of Interest (ROI) for WSIs
       - extract training patches from WSIs
       - build TF-Records for training patches
-      - find Region of Interest (ROI) for WSIs
   - [postprocess](camelyon16/postprocess)
     - contains sub-modules related to post-processing
       - extract patches for heatmaps
-      - building heatmaps
       - building TF-Records for heatmap patches
-      - extract features from heatmap
+      - building heatmaps
+      - extract features from heatmaps
       - feature classifiers (SVM, Random Forest)
 
