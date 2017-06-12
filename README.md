@@ -14,12 +14,6 @@ This repository contains the source code for deep learning based cancer detectio
   - [numPy](https://github.com/numpy/numpy), [sciPy](https://github.com/scipy/scipy)
 
 ## Modules
-  - [inception](camelyon16/inception)
-    - contains implementation of inception-v3 deep network.
-      - defining inception-v3 architecture ([inception_model.py](camelyon16/inception/slim/inception_model.py))
-      - training inception-v3 ([inception_train.py](camelyon16/inception/inception_train.py))
-      - evaluating inception-v3 ([inception_eval.py](camelyon16/inception/inception_eval.py))
-      - implementation of TF-Slim ([slim](camelyon16/inception/slim))
   - [ops](camelyon16/ops)
     - contains sub-modules for performing common operations 
       - reading WSIs ([wsi_ops.py](camelyon16/ops/wsi_ops.py))
@@ -37,4 +31,9 @@ This repository contains the source code for deep learning based cancer detectio
       - building heatmaps ([build_heatmap.py](camelyon16/postprocess/build_heatmap.py))
       - extract features from heatmaps ([extract_feature_heatmap.py](camelyon16/postprocess/extract_feature_heatmap.py))
       - feature classifiers (SVM, Random Forest) ([wsi_classification_modular.py](camelyon16/postprocess/wsi_classification_modular.py))
-
+  - [inception](camelyon16/inception)
+    - contains implementation of inception-v3 deep network.
+      - defining inception-v3 architecture ([inception_model.py](camelyon16/inception/slim/inception_model.py))
+      - training inception-v3 ([inception_train.py](camelyon16/inception/inception_train.py))
+      - evaluating inception-v3 ([inception_eval.py](camelyon16/inception/inception_eval.py))
+      - implementation of TF-Slim ([slim](camelyon16/inception/slim))
