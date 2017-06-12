@@ -24,7 +24,7 @@ This repository contains the source code for deep learning based cancer detectio
     - contains sub-modules for performing common operations 
       - reading WSIs ([wsi_ops.py](camelyon16/ops/wsi_ops.py))
       - extracting patches from WSIs ([wsi_ops.py](camelyon16/ops/wsi_ops.py))
-      - file ops (copy, move, delete patches) ([file_ops.py](camelyon16/ops/file_ops.py))
+      - file ops (copy, move, delete, rename, and search patches) ([file_ops.py](camelyon16/ops/file_ops.py))
   - [preprocess](camelyon16/preprocess)
     - contains sub-modules for data pre-processing
       - find Region of Interest (ROI) for WSIs ([wsi_ops.py](camelyon16/ops/wsi_ops.py))
