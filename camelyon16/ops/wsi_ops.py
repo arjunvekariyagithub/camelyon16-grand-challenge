@@ -336,7 +336,7 @@ class WSIOps(object):
 
     def find_roi_bbox_tumor_gt_mask(self, mask_image):
         mask = cv2.cvtColor(mask_image, cv2.COLOR_BGR2GRAY)
-        bounding_boxes = self.get_bbox(np.array(mask))
+        bounding_boxes, _ = self.get_bbox(np.array(mask))
         return bounding_boxes
 
     def find_roi_bbox(self, rgb_image):
@@ -351,7 +351,7 @@ class WSIOps(object):
         image_close = cv2.morphologyEx(np.array(mask), cv2.MORPH_CLOSE, close_kernel)
         open_kernel = np.ones((5, 5), dtype=np.uint8)
         image_open = cv2.morphologyEx(np.array(image_close), cv2.MORPH_OPEN, open_kernel)
-        bounding_boxes, rgb_contour = self.get_bbox(image_open, rgb_image)
+        bounding_boxes, rgb_contour = self.get_bbox(image_open, rgb_image=rgb_image)
         return bounding_boxes, rgb_contour, image_open
 
     @staticmethod
@@ -380,11 +380,13 @@ class WSIOps(object):
         return image_open
 
     @staticmethod
-    def get_bbox(cont_img, image):
-        rgb_contour = image.copy()
+    def get_bbox(cont_img, rgb_image=None):
         _, contours, _ = cv2.findContours(cont_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        line_color = (255, 0, 0)  # blue color code
-        cv2.drawContours(rgb_contour, contours, -1, line_color, 2)
+        rgb_contour = None
+        if rgb_image:
+            rgb_contour = rgb_image.copy()
+            line_color = (255, 0, 0)  # blue color code
+            cv2.drawContours(rgb_contour, contours, -1, line_color, 2)
         bounding_boxes = [cv2.boundingRect(c) for c in contours]
         return bounding_boxes, rgb_contour
 
